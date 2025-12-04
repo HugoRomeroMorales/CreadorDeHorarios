@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+    <class>MainWindow</class>
+    <widget class="QMainWindow" name="MainWindow">
+        <property name="geometry">
+            <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>1139</width>
+                <height>737</height>
+            </rect>
+        </property>
+        <property name="windowTitle">
+            <string>Gestor de Horarios</string>
+        </property>
+        <widget class="QWidget" name="centralwidget">
+            <layout class="QVBoxLayout" name="verticalLayout_main">
+                <item>
+                    <widget class="QLabel" name="lblTitulo">
+                        <property name="text">
+                            <string>Gestor de Horarios</string>
+                        </property>
+                        <property name="alignment">
+                            <set>Qt::AlignCenter</set>
+                        </property>
+                    </widget>
+                </item>
+                <item>
+                    <widget class="QTabWidget" name="tabWidget">
+                        <property name="currentIndex">
+                            <number>3</number>
+                        </property>
+                        <widget class="QWidget" name="tabProfesores">
+                            <attribute name="title">
+                                <string>Profesores</string>
+                            </attribute>
+                            <layout class="QVBoxLayout" name="verticalLayout_profesores">
+                                <item>
+                                    <layout class="QHBoxLayout" name="horizontalLayout_filtrosProfes">
+                                        <item>
+                                            <widget class="QLabel" name="labelCicloProfes">
+                                                <property name="text">
+                                                    <string>Ciclo:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QComboBox" name="comboCicloProfesores"/>
+                                        </item>
+                                        <item>
+                                            <widget class="QLabel" name="labelGrupoProfes">
+                                                <property name="text">
+                                                    <string>Grupo:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QComboBox" name="comboGrupoProfesores"/>
+                                        </item>
+                                        <item>
+                                            <spacer name="horizontalSpacer_1">
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="btnCargarTrabajadores">
+                                                <property name="text">
+                                                    <string>Cargar datos</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+                                <item>
+                                    <widget class="QTableWidget" name="tablaProfesores">
+                                        <column>
+                                            <property name="text">
+                                                <string>Nombre</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Módulos</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Horas/semana</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Restricciones</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Preferencias</string>
+                                            </property>
+                                        </column>
+                                    </widget>
+                                </item>
+                                <item>
+                                    <layout class="QHBoxLayout" name="horizontalLayout_botonesProfes">
+                                        <item>
+                                            <widget class="QPushButton" name="btnAnadirProfesor">
+                                                <property name="text">
+                                                    <string>Añadir profesor</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="btnEditarProfesor">
+                                                <property name="text">
+                                                    <string>Editar profesor</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="btnEliminarProfesor">
+                                                <property name="text">
+                                                    <string>Eliminar</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer name="horizontalSpacer_2">
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                    </layout>
+                                </item>
+                            </layout>
+                        </widget>
+                        <widget class="QWidget" name="tabModulos">
+                            <attribute name="title">
+                                <string>Módulos</string>
+                            </attribute>
+                            <layout class="QVBoxLayout" name="verticalLayout_modulos">
+                                <item>
+                                    <layout class="QHBoxLayout" name="horizontalLayout_filtrosMod">
+                                        <item>
+                                            <widget class="QLabel" name="labelCicloMod">
+                                                <property name="text">
+                                                    <string>Ciclo:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QComboBox" name="comboCicloModulos"/>
+                                        </item>
+                                        <item>
+                                            <widget class="QLabel" name="labelGrupoMod">
+                                                <property name="text">
+                                                    <string>Grupo:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QComboBox" name="comboGrupoModulos"/>
+                                        </item>
+                                        <item>
+                                            <spacer name="horizontalSpacer_mod_1">
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="btnCargarModulos">
+                                                <property name="text">
+                                                    <string>Cargar módulos</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+                                <item>
+                                    <widget class="QTableWidget" name="tablaModulos">
+                                        <column>
+                                            <property name="text">
+                                                <string>Nombre módulo</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Ciclo</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Horas/semana</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Horas máx/día</string>
+                                            </property>
+                                        </column>
+                                    </widget>
+                                </item>
+                                <item>
+                                    <layout class="QHBoxLayout" name="horizontalLayout_botonesMod">
+                                        <item>
+                                            <widget class="QPushButton" name="btnAsignarProfesorModulo">
+                                                <property name="text">
+                                                    <string>Asignar profesor</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer name="horizontalSpacer_mod_2">
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                    </layout>
+                                </item>
+                            </layout>
+                        </widget>
+                        <widget class="QWidget" name="tabPreferencias">
+                            <attribute name="title">
+                                <string>Preferencias</string>
+                            </attribute>
+                            <layout class="QVBoxLayout" name="verticalLayout_pref">
+                                <item>
+                                    <layout class="QHBoxLayout" name="horizontalLayout_profPref">
+                                        <item>
+                                            <widget class="QLabel" name="labelProfesorPref">
+                                                <property name="text">
+                                                    <string>Profesor:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QComboBox" name="comboProfesoresPref"/>
+                                        </item>
+                                    </layout>
+                                </item>
+                                <item>
+                                    <layout class="QHBoxLayout" name="horizontalLayout_formPref">
+                                        <item>
+                                            <widget class="QLabel" name="labelDiaPref">
+                                                <property name="text">
+                                                    <string>Día:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QComboBox" name="comboDiaPref"/>
+                                        </item>
+                                        <item>
+                                            <widget class="QLabel" name="labelHoraPref">
+                                                <property name="text">
+                                                    <string>Hora:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QComboBox" name="comboHoraPref"/>
+                                        </item>
+                                        <item>
+                                            <widget class="QLabel" name="labelTipoPref">
+                                                <property name="text">
+                                                    <string>Tipo:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QComboBox" name="comboTipoPref"/>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="btnAnadirPreferencia">
+                                                <property name="text">
+                                                    <string>Añadir preferencia</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="btnGuardarPreferencias">
+                                                <property name="text">
+                                                    <string>Guardar preferencias</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+                                <item>
+                                    <widget class="QTableWidget" name="tablaPreferencias">
+                                        <column>
+                                            <property name="text">
+                                                <string>Día</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Hora</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Tipo</string>
+                                            </property>
+                                        </column>
+                                    </widget>
+                                </item>
+                            </layout>
+                        </widget>
+                        <widget class="QWidget" name="tabHorario">
+                            <attribute name="title">
+                                <string>Horario</string>
+                            </attribute>
+                            <layout class="QVBoxLayout" name="verticalLayout_horario">
+                                <item>
+                                    <layout class="QHBoxLayout" name="horizontalLayout_filtrosHor">
+                                        <item>
+                                            <widget class="QLabel" name="labelCicloHor">
+                                                <property name="text">
+                                                    <string>Ciclo:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QComboBox" name="comboCicloHorario"/>
+                                        </item>
+                                        <item>
+                                            <widget class="QLabel" name="labelGrupoHor">
+                                                <property name="text">
+                                                    <string>Grupo:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QComboBox" name="comboGrupoHorario"/>
+                                        </item>
+                                        <item>
+                                            <widget class="QLabel" name="labelModoGeneracion">
+                                                <property name="text">
+                                                    <string>Modo:</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QComboBox" name="comboModoGeneracion">
+                                                <item>
+                                                    <property name="text">
+                                                        <string>Backtracking básico</string>
+                                                    </property>
+                                                </item>
+                                                <item>
+                                                    <property name="text">
+                                                        <string>Backtracking restricciones fuertes</string>
+                                                    </property>
+                                                </item>
+                                                <item>
+                                                    <property name="text">
+                                                        <string>Backtracking relajado (lvl 2)</string>
+                                                    </property>
+                                                </item>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer name="horizontalSpacer_hor_1">
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="btnGenerarHorario">
+                                                <property name="text">
+                                                    <string>Generar horario</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="btnGuardarHorario">
+                                                <property name="text">
+                                                    <string>Guardar horario</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                    </layout>
+                                </item>
+                                <item>
+                                    <widget class="QTableWidget" name="tablaHorario">
+                                        <row>
+                                            <property name="text">
+                                                <string>1ª</string>
+                                            </property>
+                                        </row>
+                                        <row>
+                                            <property name="text">
+                                                <string>2ª</string>
+                                            </property>
+                                        </row>
+                                        <row>
+                                            <property name="text">
+                                                <string>3ª</string>
+                                            </property>
+                                        </row>
+                                        <row>
+                                            <property name="text">
+                                                <string>4ª</string>
+                                            </property>
+                                        </row>
+                                        <row>
+                                            <property name="text">
+                                                <string>5ª</string>
+                                            </property>
+                                        </row>
+                                        <column>
+                                            <property name="text">
+                                                <string>Lunes</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Martes</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Miércoles</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Jueves</string>
+                                            </property>
+                                        </column>
+                                        <column>
+                                            <property name="text">
+                                                <string>Viernes</string>
+                                            </property>
+                                        </column>
+                                    </widget>
+                                </item>
+                            </layout>
+                        </widget>
+                    </widget>
+                </item>
+            </layout>
+        </widget>
+        <widget class="QMenuBar" name="menubar">
+            <property name="geometry">
+                <rect>
+                    <x>0</x>
+                    <y>0</y>
+                    <width>1139</width>
+                    <height>26</height>
+                </rect>
+            </property>
+        </widget>
+        <widget class="QStatusBar" name="statusbar"/>
+    </widget>
+    <resources/>
+    <connections/>
+</ui>
