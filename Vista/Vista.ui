@@ -30,6 +30,8 @@
                         <property name="currentIndex">
                             <number>3</number>
                         </property>
+                        
+                        
                         <widget class="QWidget" name="tabProfesores">
                             <attribute name="title">
                                 <string>Profesores</string>
@@ -148,6 +150,8 @@
                                 </item>
                             </layout>
                         </widget>
+                        
+                        
                         <widget class="QWidget" name="tabModulos">
                             <attribute name="title">
                                 <string>Módulos</string>
@@ -247,11 +251,14 @@
                                 </item>
                             </layout>
                         </widget>
+                        
+                        
                         <widget class="QWidget" name="tabPreferencias">
                             <attribute name="title">
                                 <string>Preferencias</string>
                             </attribute>
                             <layout class="QVBoxLayout" name="verticalLayout_pref">
+                                
                                 <item>
                                     <layout class="QHBoxLayout" name="horizontalLayout_profPref">
                                         <item>
@@ -266,75 +273,74 @@
                                         </item>
                                     </layout>
                                 </item>
+                                
+                                
                                 <item>
-                                    <layout class="QHBoxLayout" name="horizontalLayout_formPref">
-                                        <item>
-                                            <widget class="QLabel" name="labelDiaPref">
-                                                <property name="text">
-                                                    <string>Día:</string>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                        <item>
-                                            <widget class="QComboBox" name="comboDiaPref"/>
-                                        </item>
-                                        <item>
-                                            <widget class="QLabel" name="labelHoraPref">
-                                                <property name="text">
-                                                    <string>Hora:</string>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                        <item>
-                                            <widget class="QComboBox" name="comboHoraPref"/>
-                                        </item>
-                                        <item>
-                                            <widget class="QLabel" name="labelTipoPref">
-                                                <property name="text">
-                                                    <string>Tipo:</string>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                        <item>
-                                            <widget class="QComboBox" name="comboTipoPref"/>
-                                        </item>
-                                        <item>
-                                            <widget class="QPushButton" name="btnAnadirPreferencia">
-                                                <property name="text">
-                                                    <string>Añadir preferencia</string>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                        <item>
-                                            <widget class="QPushButton" name="btnGuardarPreferencias">
-                                                <property name="text">
-                                                    <string>Guardar preferencias</string>
-                                                </property>
-                                            </widget>
-                                        </item>
-                                    </layout>
+                                    <widget class="QLabel" name="labelDispTitulo">
+                                        <property name="text">
+                                            <string>Disponibilidad (OBLIGATORIA):</string>
+                                        </property>
+                                    </widget>
+                                </item>
+                                <item>
+                                    <widget class="QTableWidget" name="tablaDisponibilidad">
+                                        <property name="selectionMode">
+                                            <enum>QAbstractItemView::ExtendedSelection</enum>
+                                        </property>
+                                        <property name="selectionBehavior">
+                                            <enum>QAbstractItemView::SelectItems</enum>
+                                        </property>
+                                    </widget>
+                                </item>
+                                
+                                
+                                <item>
+                                    <widget class="QLabel" name="labelPrefTitulo">
+                                        <property name="text">
+                                            <string>Preferencias de días y horas:</string>
+                                        </property>
+                                    </widget>
                                 </item>
                                 <item>
                                     <widget class="QTableWidget" name="tablaPreferencias">
-                                        <column>
-                                            <property name="text">
-                                                <string>Día</string>
-                                            </property>
-                                        </column>
-                                        <column>
-                                            <property name="text">
-                                                <string>Hora</string>
-                                            </property>
-                                        </column>
-                                        <column>
-                                            <property name="text">
-                                                <string>Tipo</string>
-                                            </property>
-                                        </column>
+                                        <property name="selectionMode">
+                                            <enum>QAbstractItemView::ExtendedSelection</enum>
+                                        </property>
+                                        <property name="selectionBehavior">
+                                            <enum>QAbstractItemView::SelectItems</enum>
+                                        </property>
                                     </widget>
+                                </item>
+                                
+                                
+                                <item>
+                                    <layout class="QHBoxLayout" name="horizontalLayout_botonesPref">
+                                        <item>
+                                            <widget class="QPushButton" name="btnGuardarPrefDisp">
+                                                <property name="text">
+                                                    <string>Guardar preferencias y disponibilidad</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <spacer name="horizontalSpacer_pref_1">
+                                                <property name="orientation">
+                                                    <enum>Qt::Horizontal</enum>
+                                                </property>
+                                                <property name="sizeHint" stdset="0">
+                                                    <size>
+                                                        <width>40</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </item>
+                                    </layout>
                                 </item>
                             </layout>
                         </widget>
+                        
+                        
                         <widget class="QWidget" name="tabHorario">
                             <attribute name="title">
                                 <string>Horario</string>
