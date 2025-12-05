@@ -34,17 +34,18 @@ class MainWindow(QtWidgets.QMainWindow):
         header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
     def cargar_profesores_en_tabla(self):
-    # 1) Traemos profesores
-        profesores = get_profesor()
-
-    # 2) Traemos módulos para saber qué da cada profe
-        modulos = get_modulo()
-        mods_por_prof = {}  # dict: id_prof -> [nombres de módulo]
-
+        try:
+            profesores = get_profesor()
+            modulos = get_modulo()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar profesores:\n{e}") 
+            return
+             
+        mods_por_prof = {} 
         for m in modulos:
             id_prof_mod = m.get("id_prof")
             if id_prof_mod is None:
-                continue  # módulo aún sin profe asignado
+                continue 
             nombre_mod = m.get("nombre", "")
             mods_por_prof.setdefault(id_prof_mod, []).append(nombre_mod)
 
@@ -65,7 +66,7 @@ class MainWindow(QtWidgets.QMainWindow):
             item_nombre.setData(Qt.UserRole, id_prof)
             tabla.setItem(fila, 0, item_nombre)
 
-        # Columna 1: Módulos (lista separada por comas)
+        # Columna 1: Módulos 
             lista_mods = mods_por_prof.get(id_prof, [])
             texto_mods = ", ".join(lista_mods) if lista_mods else ""
             tabla.setItem(fila, 1, QTableWidgetItem(texto_mods))
@@ -76,7 +77,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Columna 3: Restricciones (horas_max_dia)
             tabla.setItem(fila, 3, QTableWidgetItem(str(horas_max_dia)))
 
-        # Columna 4: Preferencias (de momento vacío)
+        # Columna 4: Preferencias 
             tabla.setItem(fila, 4, QTableWidgetItem(""))
 
         self._bloqueo_item_changed_prof = False
@@ -142,7 +143,7 @@ class MainWindow(QtWidgets.QMainWindow):
         elif columna == 3:
             campo = "horas_max_dia"
         else:
-            return  # otras columnas de momento no tocan la BBDD
+            return
 
         if campo in ("horas_max_semana", "horas_max_dia"):
             try:
@@ -185,7 +186,11 @@ class MainWindow(QtWidgets.QMainWindow):
             QMessageBox.critical(self, "Error", f"Error al eliminar profesor:\n{e}")
             
     def cargar_modulos_en_tabla(self):
-        modulos = get_modulo()
+        try:
+            modulos = get_modulo()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar módulos:\n{e}") 
+            return
 
         tabla = self.ui.tablaModulos
         tabla.clearContents()
