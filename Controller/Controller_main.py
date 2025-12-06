@@ -1,6 +1,7 @@
 from  PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox, QInputDialog, QTableWidgetItem
+from PyQt5 import uic
 
 from Vista.Vista_ui import Ui_MainWindow
 from Controller.Controller_db import (
@@ -499,6 +500,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.cargar_preferencias_profesor_seleccionado()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al eliminar preferencia:\n{e}")
+            
+#Este metodo solamente sirve para forzar a que aparezca la sexta hora en la tabla a la hora de ejecutar nuestro Creador de horarios 
+    def __init__(self):
+        super().__init__()
+        uic.loadUi("Vista/Vista.ui", self)   
+
+        # FORZAR 6 HORAS
+        self.tablaHorario.setRowCount(6)
+        self.tablaHorario.setVerticalHeaderLabels(
+            ["1ª", "2ª", "3ª", "4ª", "5ª", "6ª"]
+        )
 
 
 
