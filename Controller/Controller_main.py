@@ -1,4 +1,4 @@
-from  PyQt5 import QtWidgets
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox, QInputDialog, QTableWidgetItem
 from PyQt5 import uic
@@ -16,14 +16,19 @@ from Controller.Controller_db import (
     get_preferencias_por_profesor,
     insertar_preferencia,
     eliminar_preferencia,
-    )
+)
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        
+
+        self.ui.tablaHorario.setRowCount(6)
+        self.ui.tablaHorario.setVerticalHeaderLabels(
+            ["1ª", "2ª", "3ª", "4ª", "5ª", "6ª"]
+        )
+
         self.bloqueo_item_changed_prof = False
         self.bloqueo_item_changed_mod = False
 
@@ -36,13 +41,13 @@ class MainWindow(QtWidgets.QMainWindow):
         header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
         self.ui.btnCargarModulos.clicked.connect(self.cargar_modulos_en_tabla)
-        self.ui.btnAsignarProfesorModulo.clicked.connect(self.asignar_profesor_a_modulo)    
-        
+        self.ui.btnAsignarProfesorModulo.clicked.connect(self.asignar_profesor_a_modulo)
+
         self.ui.tablaModulos.itemChanged.connect(self.celda_modulo_editada)
-        
+
         header_mod = self.ui.tablaModulos.horizontalHeader()
         header_mod.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        
+
         self.ui.comboDiaPref.clear()
         self.ui.comboDiaPref.addItems(["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"])
 
@@ -54,13 +59,12 @@ class MainWindow(QtWidgets.QMainWindow):
             "12:20-13:35": 5,
             "13:35-14:30": 6,
         }
-        self.horas_map = horas  
+        self.horas_map = horas
 
         self.ui.comboHoraPref.clear()
         for texto, valor in horas.items():
             self.ui.comboHoraPref.addItem(texto, valor)
 
-        
         self.ui.comboTipoPref.clear()
         self.ui.comboTipoPref.addItems([
             "Muy preferida",
@@ -68,35 +72,31 @@ class MainWindow(QtWidgets.QMainWindow):
             "Evitar si es posible",
         ])
 
-       
         self.cargar_profesores_en_combo_pref()
 
-        
         self.ui.comboProfesoresPref.currentIndexChanged.connect(self.cargar_preferencias_profesor_seleccionado)
         self.ui.btnAnadirPreferencia.clicked.connect(self.anadir_preferencia)
         self.ui.btnGuardarPreferencias.clicked.connect(self.guardar_preferencias)
 
         self.ui.tablaPreferencias.cellDoubleClicked.connect(self.eliminar_preferencia_seleccionada)
-        
 
     def cargar_profesores_en_tabla(self):
         try:
             profesores = get_profesor()
             modulos = get_modulo()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error al cargar profesores:\n{e}") 
+            QMessageBox.critical(self, "Error", f"Error al cargar profesores:\n{e}")
             return
-             
-        mods_por_prof = {} 
+
+        mods_por_prof = {}
         for m in modulos:
             id_prof_mod = m.get("id_prof")
             if id_prof_mod is None:
-                continue 
+                continue
             nombre_mod = m.get("nombre", "")
             mods_por_prof.setdefault(id_prof_mod, []).append(nombre_mod)
 
         self.bloqueo_item_changed_prof = True
-        
 
         tabla = self.ui.tablaProfesores
         tabla.clearContents()
@@ -108,28 +108,21 @@ class MainWindow(QtWidgets.QMainWindow):
             horas_max_dia = prof.get("horas_max_dia", "")
             horas_max_semana = prof.get("horas_max_semana", "")
 
-        # Columna 0: Nombre
             item_nombre = QTableWidgetItem(str(nombre))
             item_nombre.setData(Qt.UserRole, id_prof)
             tabla.setItem(fila, 0, item_nombre)
 
-        # Columna 1: Módulos 
             lista_mods = mods_por_prof.get(id_prof, [])
             texto_mods = ", ".join(lista_mods) if lista_mods else ""
             tabla.setItem(fila, 1, QTableWidgetItem(texto_mods))
 
-        # Columna 2: Horas/semana
             tabla.setItem(fila, 2, QTableWidgetItem(str(horas_max_semana)))
-
-        # Columna 3: Restricciones (horas_max_dia)
             tabla.setItem(fila, 3, QTableWidgetItem(str(horas_max_dia)))
-
-        # Columna 4: Preferencias 
             tabla.setItem(fila, 4, QTableWidgetItem(""))
 
         self.bloqueo_item_changed_prof = False
         tabla.resizeColumnsToContents()
-        
+
     def anadir_profesor(self):
         nombre, ok = QInputDialog.getText(self, "Nuevo profesor", "Nombre del profesor:")
         if not ok or not nombre.strip():
@@ -231,16 +224,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.cargar_profesores_en_tabla()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al eliminar profesor:\n{e}")
-            
+
     def cargar_modulos_en_tabla(self):
         try:
             modulos = get_modulo()
         except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"Error al cargar módulos desde Supabase:\n{e}"
-            )
+            QMessageBox.critical(self, "Error", f"Error al cargar módulos desde Supabase:\n{e}")
             return
 
         self.bloqueo_item_changed_mod = True
@@ -304,13 +293,13 @@ class MainWindow(QtWidgets.QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al actualizar módulo:\n{e}")
             self.cargar_modulos_en_tabla()
-            
+
     def get_id_mod_de_fila(self, fila: int):
         item = self.ui.tablaModulos.item(fila, 0)
         if item is None:
             return None
         return item.data(Qt.UserRole)
-    
+
     def asignar_profesor_a_modulo(self):
         tabla = self.ui.tablaModulos
         fila = tabla.currentRow()
@@ -324,7 +313,6 @@ class MainWindow(QtWidgets.QMainWindow):
             QMessageBox.warning(self, "Asignar profesor", "No se ha podido obtener el id del módulo.")
             return
 
-        # Cargamos los profesores desde Supabase
         try:
             profesores = get_profesor()
         except Exception as e:
@@ -335,11 +323,9 @@ class MainWindow(QtWidgets.QMainWindow):
             QMessageBox.information(self, "Asignar profesor", "No hay profesores en la base de datos.")
             return
 
-        # Preparamos lista de nombres y mapa nombre -> id_prof
         nombres = [p.get("nombre", "") for p in profesores]
         mapa_nombre_id = {p.get("nombre", ""): p.get("id_prof") for p in profesores}
 
-        # Diálogo para elegir profesor
         nombre_sel, ok = QInputDialog.getItem(
             self,
             "Asignar profesor",
@@ -356,7 +342,6 @@ class MainWindow(QtWidgets.QMainWindow):
             QMessageBox.critical(self, "Error", "No se ha podido obtener el id del profesor seleccionado.")
             return
 
-        # Actualizamos el módulo en Supabase
         try:
             actualizar_modulo(id_mod, "id_prof", id_prof_nuevo)
             QMessageBox.information(self, "OK", "Profesor asignado correctamente.")
@@ -364,37 +349,36 @@ class MainWindow(QtWidgets.QMainWindow):
             QMessageBox.critical(self, "Error", f"Error al asignar profesor:\n{e}")
             return
 
-        # Recargamos tablas para reflejar el cambio
         self.cargar_modulos_en_tabla()
         self.cargar_profesores_en_tabla()
-        
+
     def cargar_profesores_en_combo_pref(self):
-            try:
-                profesores = get_profesor()
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"No se pudieron cargar los profesores:\n{e}")
-                return
+        try:
+            profesores = get_profesor()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudieron cargar los profesores:\n{e}")
+            return
 
-            combo = self.ui.comboProfesoresPref
-            combo.clear()
+        combo = self.ui.comboProfesoresPref
+        combo.clear()
 
-            for prof in profesores:
-                nombre = prof.get("nombre", "")
-                id_prof = prof.get("id_prof")
-                combo.addItem(nombre, id_prof)
+        for prof in profesores:
+            nombre = prof.get("nombre", "")
+            id_prof = prof.get("id_prof")
+            combo.addItem(nombre, id_prof)
 
-            if combo.count() > 0:
-                self.cargar_preferencias_profesor_seleccionado()
-            else:
-                self.ui.tablaPreferencias.clearContents()
-                self.ui.tablaPreferencias.setRowCount(0)
-                
+        if combo.count() > 0:
+            self.cargar_preferencias_profesor_seleccionado()
+        else:
+            self.ui.tablaPreferencias.clearContents()
+            self.ui.tablaPreferencias.setRowCount(0)
+
     def get_id_prof_pref_actual(self):
         idx = self.ui.comboProfesoresPref.currentIndex()
         if idx < 0:
             return None
         return self.ui.comboProfesoresPref.itemData(idx)
-    
+
     def cargar_preferencias_profesor_seleccionado(self):
         id_prof = self.get_id_prof_pref_actual()
         tabla = self.ui.tablaPreferencias
@@ -412,7 +396,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         tabla.clearContents()
         tabla.setRowCount(len(prefs))
-
 
         mapa_nivel_tipo = {
             1: "Muy preferida",
@@ -440,7 +423,7 @@ class MainWindow(QtWidgets.QMainWindow):
             tabla.setItem(fila, 2, QTableWidgetItem(tipo_texto))
 
         tabla.resizeColumnsToContents()
-        
+
     def anadir_preferencia(self):
         id_prof = self.get_id_prof_pref_actual()
         if id_prof is None:
@@ -450,12 +433,10 @@ class MainWindow(QtWidgets.QMainWindow):
         dia = self.ui.comboDiaPref.currentText()
         tipo_str = self.ui.comboTipoPref.currentText()
 
-
         hora_inicio = self.ui.comboHoraPref.currentData()
         if hora_inicio is None:
             QMessageBox.warning(self, "Preferencias", "Selecciona una hora válida.")
             return
-
 
         hora_final = hora_inicio + 1
 
@@ -464,7 +445,7 @@ class MainWindow(QtWidgets.QMainWindow):
             "Neutra": 2,
             "Evitar si es posible": 3,
         }
-        nivel = mapa_tipo_nivel.get(tipo_str, 2)  
+        nivel = mapa_tipo_nivel.get(tipo_str, 2)
 
         try:
             insertar_preferencia(id_prof, dia, hora_inicio, hora_final, nivel)
@@ -479,7 +460,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def eliminar_preferencia_seleccionada(self, fila, columna):
         tabla = self.ui.tablaPreferencias
-        item = tabla.item(fila, 0) 
+        item = tabla.item(fila, 0)
 
         if item is None:
             return
@@ -500,18 +481,3 @@ class MainWindow(QtWidgets.QMainWindow):
             self.cargar_preferencias_profesor_seleccionado()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al eliminar preferencia:\n{e}")
-            
-#Este metodo solamente sirve para forzar a que aparezca la sexta hora en la tabla a la hora de ejecutar nuestro Creador de horarios 
-    def __init__(self):
-        super().__init__()
-        uic.loadUi("Vista/Vista.ui", self)   
-
-        # FORZAR 6 HORAS
-        self.tablaHorario.setRowCount(6)
-        self.tablaHorario.setVerticalHeaderLabels(
-            ["1ª", "2ª", "3ª", "4ª", "5ª", "6ª"]
-        )
-
-
-
-
