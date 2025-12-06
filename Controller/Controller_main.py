@@ -12,6 +12,9 @@ from Controller.Controller_db import (
     insertar_modulo,
     actualizar_modulo,
     eliminar_modulo,
+    get_preferencias_por_profesor,
+    insertar_preferencia,
+    eliminar_preferencia,
     )
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -38,6 +41,41 @@ class MainWindow(QtWidgets.QMainWindow):
         
         header_mod = self.ui.tablaModulos.horizontalHeader()
         header_mod.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        
+        self.ui.comboDiaPref.clear()
+        self.ui.comboDiaPref.addItems(["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"])
+
+        horas = {
+            "8:30-9:25": 1,
+            "9:25-10:20": 2,
+            "10:20-11:15": 3,
+            "11:45-12:20": 4,
+            "12:20-13:35": 5,
+            "13:35-14:30": 6,
+        }
+        self.horas_map = horas  
+
+        self.ui.comboHoraPref.clear()
+        for texto, valor in horas.items():
+            self.ui.comboHoraPref.addItem(texto, valor)
+
+        
+        self.ui.comboTipoPref.clear()
+        self.ui.comboTipoPref.addItems([
+            "Muy preferida",
+            "Neutra",
+            "Evitar si es posible",
+        ])
+
+       
+        self.cargar_profesores_en_combo_pref()
+
+        
+        self.ui.comboProfesoresPref.currentIndexChanged.connect(self.cargar_preferencias_profesor_seleccionado)
+        self.ui.btnAnadirPreferencia.clicked.connect(self.anadir_preferencia)
+        self.ui.btnGuardarPreferencias.clicked.connect(self.guardar_preferencias)
+
+        self.ui.tablaPreferencias.cellDoubleClicked.connect(self.eliminar_preferencia_seleccionada)
         
 
     def cargar_profesores_en_tabla(self):
@@ -328,6 +366,140 @@ class MainWindow(QtWidgets.QMainWindow):
         # Recargamos tablas para reflejar el cambio
         self.cargar_modulos_en_tabla()
         self.cargar_profesores_en_tabla()
+        
+    def cargar_profesores_en_combo_pref(self):
+            try:
+                profesores = get_profesor()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"No se pudieron cargar los profesores:\n{e}")
+                return
+
+            combo = self.ui.comboProfesoresPref
+            combo.clear()
+
+            for prof in profesores:
+                nombre = prof.get("nombre", "")
+                id_prof = prof.get("id_prof")
+                combo.addItem(nombre, id_prof)
+
+            if combo.count() > 0:
+                self.cargar_preferencias_profesor_seleccionado()
+            else:
+                self.ui.tablaPreferencias.clearContents()
+                self.ui.tablaPreferencias.setRowCount(0)
+                
+    def get_id_prof_pref_actual(self):
+        idx = self.ui.comboProfesoresPref.currentIndex()
+        if idx < 0:
+            return None
+        return self.ui.comboProfesoresPref.itemData(idx)
+    
+    def cargar_preferencias_profesor_seleccionado(self):
+        id_prof = self.get_id_prof_pref_actual()
+        tabla = self.ui.tablaPreferencias
+
+        if id_prof is None:
+            tabla.clearContents()
+            tabla.setRowCount(0)
+            return
+
+        try:
+            prefs = get_preferencias_por_profesor(id_prof)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudieron cargar las preferencias:\n{e}")
+            return
+
+        tabla.clearContents()
+        tabla.setRowCount(len(prefs))
+
+
+        mapa_nivel_tipo = {
+            1: "Muy preferida",
+            2: "Neutra",
+            3: "Evitar si es posible",
+        }
+
+        horas_invertido = {v: k for k, v in self.horas_map.items()}
+
+        for fila, pref in enumerate(prefs):
+            id_pref = pref.get("id_pref")
+            dia = pref.get("dia_semana", "")
+            hora_inicio = pref.get("hora_inicio", "")
+            nivel = pref.get("nivel", None)
+
+            tipo_texto = mapa_nivel_tipo.get(nivel, "")
+            texto_hora = horas_invertido.get(hora_inicio, str(hora_inicio))
+
+            item_dia = QTableWidgetItem(str(dia))
+            item_dia.setData(Qt.UserRole, id_pref)
+            tabla.setItem(fila, 0, item_dia)
+
+            tabla.setItem(fila, 1, QTableWidgetItem(texto_hora))
+
+            tabla.setItem(fila, 2, QTableWidgetItem(tipo_texto))
+
+        tabla.resizeColumnsToContents()
+        
+    def anadir_preferencia(self):
+        id_prof = self.get_id_prof_pref_actual()
+        if id_prof is None:
+            QMessageBox.warning(self, "Preferencias", "Selecciona un profesor primero.")
+            return
+
+        dia = self.ui.comboDiaPref.currentText()
+        tipo_str = self.ui.comboTipoPref.currentText()
+
+
+        hora_inicio = self.ui.comboHoraPref.currentData()
+        if hora_inicio is None:
+            QMessageBox.warning(self, "Preferencias", "Selecciona una hora válida.")
+            return
+
+
+        hora_final = hora_inicio + 1
+
+        mapa_tipo_nivel = {
+            "Muy preferida": 1,
+            "Neutra": 2,
+            "Evitar si es posible": 3,
+        }
+        nivel = mapa_tipo_nivel.get(tipo_str, 2)  
+
+        try:
+            insertar_preferencia(id_prof, dia, hora_inicio, hora_final, nivel)
+            QMessageBox.information(self, "Preferencias", "Preferencia añadida correctamente.")
+            self.cargar_preferencias_profesor_seleccionado()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al insertar preferencia:\n{e}")
+
+    def guardar_preferencias(self):
+        self.cargar_preferencias_profesor_seleccionado()
+        QMessageBox.information(self, "Preferencias", "Preferencias actualizadas.")
+
+    def eliminar_preferencia_seleccionada(self, fila, columna):
+        tabla = self.ui.tablaPreferencias
+        item = tabla.item(fila, 0) 
+
+        if item is None:
+            return
+
+        id_pref = item.data(Qt.UserRole)
+
+        resp = QMessageBox.question(
+            self,
+            "Eliminar preferencia",
+            "¿Seguro que quieres eliminar esta preferencia?",
+            QMessageBox.Yes | QMessageBox.No,
+        )
+        if resp != QMessageBox.Yes:
+            return
+
+        try:
+            eliminar_preferencia(id_pref)
+            self.cargar_preferencias_profesor_seleccionado()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al eliminar preferencia:\n{e}")
+
 
 
 
