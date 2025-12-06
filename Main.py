@@ -1,7 +1,5 @@
 import sys
 from PyQt5 import QtWidgets
-from PyQt5 import uic
-from PyQt5.QtWidgets import  QMainWindow
 
 from Controller.Controller_main import MainWindow
 
@@ -10,12 +8,6 @@ def cargar_estilos(app):
         qss = f.read()
         app.setStyleSheet(qss)
         
-    
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        uic.loadUi("Vista/Vista.ui", self)
-
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     cargar_estilos(app)
