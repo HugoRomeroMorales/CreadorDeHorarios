@@ -36,6 +36,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.btnAnadirProfesor.clicked.connect(self.anadir_profesor)
         self.ui.btnEliminarProfesor.clicked.connect(self.eliminar_profesor_seleccionado)
         self.ui.tablaProfesores.itemChanged.connect(self.celda_profesor_editada)
+        self.ui.btnAnadirModulo.clicked.connect(self.anadir_modulo)
+        self.ui.btnEliminarModulo.clicked.connect(self.eliminar_modulo_seleccionado)
+
 
         header = self.ui.tablaProfesores.horizontalHeader()
         header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -287,6 +290,17 @@ class MainWindow(QtWidgets.QMainWindow):
                 QMessageBox.warning(self, "Valor inválido", "Debes introducir un número entero.")
                 self.cargar_modulos_en_tabla()
                 return
+            
+#        .-----------.
+#       /     12      \
+#      | 11    •    1  |
+#      | 10    |    2  |
+#      |  9    |    3  |
+#      |  8   A•P   4  |
+#       \ 7    H    5 /
+#        '-----6-----'
+#
+
 
         try:
             actualizar_modulo(id_mod, campo, nuevo_valor)
@@ -481,3 +495,76 @@ class MainWindow(QtWidgets.QMainWindow):
             self.cargar_preferencias_profesor_seleccionado()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al eliminar preferencia:\n{e}")
+#Aqui esta el metodo de eliminar el modulo, el funcionamiento de este es que si le das al boton sin haber seleccionar un modulo antes pues no nos dejara y aparecera un mensaje por pantalla
+#Luego si lo seleccionamos borraremos la fila del modulo de la tabla y tendremos que confirmar si queremos borrarlo antes de que la acción se ejecute
+            
+    def eliminar_modulo_seleccionado(self):
+        tabla = self.ui.tablaModulos
+        fila = tabla.currentRow()
+
+        if fila < 0:
+            QMessageBox.warning(self, "Eliminar módulo", "Selecciona un módulo primero.")
+            return
+
+        item = tabla.item(fila, 0)
+        if item is None:
+            return
+
+        id_mod = item.data(Qt.UserRole)
+        nombre = item.text()
+
+        resp = QMessageBox.question(
+            self,
+            "Confirmar eliminación",
+            f"¿Eliminar el módulo '{nombre}' (id={id_mod})?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+
+        if resp != QMessageBox.Yes:
+            return
+
+        try:
+            eliminar_modulo(id_mod)
+            self.cargar_modulos_en_tabla()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo eliminar:\n{e}")
+            
+#Aqui el metodo de añadir el modulo que en este al darle al boton de añadir ya nos dice que le digamos el nombre y el ciclo del modulo, junto al numero de horas y maximo de horas por dia, si todo esa informacion esta colocada correctamente y no rompe nada se nos deberia de generar el modulo 
+    def anadir_modulo(self):
+        nombre, ok = QInputDialog.getText(self, "Nuevo módulo", "Nombre del módulo:")
+        if not ok or not nombre.strip():
+            return
+
+        ciclo, ok = QInputDialog.getText(self, "Ciclo", "Introduce el ciclo del módulo:")
+        if not ok or not ciclo.strip():
+            return
+
+        horas_sem, ok = QInputDialog.getInt(
+            self,
+            "Horas por semana",
+            "¿Cuántas horas semanales tiene este módulo?",
+            value=5,
+            min=1,
+            max=40,
+        )
+        if not ok:
+            return
+
+        horas_max_dia, ok = QInputDialog.getInt(
+            self,
+            "Horas máximas por día",
+            "Máximo de horas consecutivas por día para este módulo:",
+            value=2,
+            min=1,
+            max=10,
+        )
+        if not ok:
+            return
+
+        try:
+            insertar_modulo(nombre.strip(), ciclo.strip(), horas_sem, horas_max_dia)
+            self.cargar_modulos_en_tabla()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo añadir el módulo:\n{e}")
+
+

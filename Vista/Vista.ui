@@ -31,7 +31,6 @@
                             <number>3</number>
                         </property>
                         
-                        
                         <widget class="QWidget" name="tabProfesores">
                             <attribute name="title">
                                 <string>Profesores</string>
@@ -151,7 +150,6 @@
                             </layout>
                         </widget>
                         
-                        
                         <widget class="QWidget" name="tabModulos">
                             <attribute name="title">
                                 <string>Módulos</string>
@@ -235,6 +233,20 @@
                                             </widget>
                                         </item>
                                         <item>
+                                            <widget class="QPushButton" name="btnAnadirModulo">
+                                                <property name="text">
+                                                    <string>Añadir módulo</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
+                                            <widget class="QPushButton" name="btnEliminarModulo">
+                                                <property name="text">
+                                                    <string>Eliminar módulo</string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item>
                                             <spacer name="horizontalSpacer_mod_2">
                                                 <property name="orientation">
                                                     <enum>Qt::Horizontal</enum>
@@ -251,7 +263,6 @@
                                 </item>
                             </layout>
                         </widget>
-                        
                         
                         <widget class="QWidget" name="tabPreferencias">
                             <attribute name="title">
@@ -336,7 +347,6 @@
                                 </item>
                             </layout>
                         </widget>
-                        
                         
                         <widget class="QWidget" name="tabHorario">
                             <attribute name="title">
