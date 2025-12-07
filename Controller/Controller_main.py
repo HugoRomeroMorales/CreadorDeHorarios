@@ -31,6 +31,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.bloqueo_item_changed_prof = False
         self.bloqueo_item_changed_mod = False
+        self.modulos_cache = []
 
         self.ui.btnCargarTrabajadores.clicked.connect(self.cargar_profesores_en_tabla)
         self.ui.btnAnadirProfesor.clicked.connect(self.anadir_profesor)
@@ -38,7 +39,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.tablaProfesores.itemChanged.connect(self.celda_profesor_editada)
         self.ui.btnAnadirModulo.clicked.connect(self.anadir_modulo)
         self.ui.btnEliminarModulo.clicked.connect(self.eliminar_modulo_seleccionado)
-
 
         header = self.ui.tablaProfesores.horizontalHeader()
         header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -82,6 +82,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.btnGuardarPreferencias.clicked.connect(self.guardar_preferencias)
 
         self.ui.tablaPreferencias.cellDoubleClicked.connect(self.eliminar_preferencia_seleccionada)
+
+        self.cargar_modulos_en_tabla()
+        self.cargar_ciclos()
+        self.ui.comboCicloModulos.currentTextChanged.connect(self.on_ciclo_modulo_cambiado)
+        self.ui.comboGrupoModulos.currentTextChanged.connect(self.actualizar_tabla_modulos)
 
     def cargar_profesores_en_tabla(self):
         try:
@@ -230,11 +235,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def cargar_modulos_en_tabla(self):
         try:
-            modulos = get_modulo()
+            self.modulos_cache = get_modulo()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al cargar módulos desde Supabase:\n{e}")
             return
 
+        self._cargar_modulos_en_tabla_desde_lista(self.modulos_cache)
+
+    def _cargar_modulos_en_tabla_desde_lista(self, modulos):
         self.bloqueo_item_changed_mod = True
 
         tabla = self.ui.tablaModulos
@@ -290,7 +298,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 QMessageBox.warning(self, "Valor inválido", "Debes introducir un número entero.")
                 self.cargar_modulos_en_tabla()
                 return
-            
+
 #        .-----------.
 #       /     12      \
 #      | 11    •    1  |
@@ -299,8 +307,6 @@ class MainWindow(QtWidgets.QMainWindow):
 #      |  8   A•P   4  |
 #       \ 7    H    5 /
 #        '-----6-----'
-#
-
 
         try:
             actualizar_modulo(id_mod, campo, nuevo_valor)
@@ -365,6 +371,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.cargar_modulos_en_tabla()
         self.cargar_profesores_en_tabla()
+        self.cargar_ciclos()
 
     def cargar_profesores_en_combo_pref(self):
         try:
@@ -497,7 +504,7 @@ class MainWindow(QtWidgets.QMainWindow):
             QMessageBox.critical(self, "Error", f"Error al eliminar preferencia:\n{e}")
 #Aqui esta el metodo de eliminar el modulo, el funcionamiento de este es que si le das al boton sin haber seleccionar un modulo antes pues no nos dejara y aparecera un mensaje por pantalla
 #Luego si lo seleccionamos borraremos la fila del modulo de la tabla y tendremos que confirmar si queremos borrarlo antes de que la acción se ejecute
-            
+
     def eliminar_modulo_seleccionado(self):
         tabla = self.ui.tablaModulos
         fila = tabla.currentRow()
@@ -526,9 +533,10 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             eliminar_modulo(id_mod)
             self.cargar_modulos_en_tabla()
+            self.cargar_ciclos()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo eliminar:\n{e}")
-            
+
 #Aqui el metodo de añadir el modulo que en este al darle al boton de añadir ya nos dice que le digamos el nombre y el ciclo del modulo, junto al numero de horas y maximo de horas por dia, si todo esa informacion esta colocada correctamente y no rompe nada se nos deberia de generar el modulo 
     def anadir_modulo(self):
         nombre, ok = QInputDialog.getText(self, "Nuevo módulo", "Nombre del módulo:")
@@ -564,7 +572,42 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             insertar_modulo(nombre.strip(), ciclo.strip(), horas_sem, horas_max_dia)
             self.cargar_modulos_en_tabla()
+            self.cargar_ciclos()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo añadir el módulo:\n{e}")
 
+#Aqui el metodo de cargar ciclos  
+    def cargar_ciclos(self):
+        modulos = self.modulos_cache or []
+        ciclos = sorted({m.get("ciclo", "") for m in modulos if m.get("ciclo")})
+        self.ui.comboCicloModulos.clear()
+        self.ui.comboCicloModulos.addItems(ciclos)
+        if ciclos:
+            self.cargar_nombres_por_ciclo()
+            self.actualizar_tabla_modulos()
+#Aqui el metodo de cuando gemos cambiado un modulo y un ciclo 
+    def on_ciclo_modulo_cambiado(self):
+        self.cargar_nombres_por_ciclo()
+        self.actualizar_tabla_modulos()
 
+    def cargar_nombres_por_ciclo(self):
+        ciclo_sel = self.ui.comboCicloModulos.currentText()
+        modulos = self.modulos_cache or []
+        nombres = sorted({m.get("nombre", "") for m in modulos if (not ciclo_sel or m.get("ciclo") == ciclo_sel)})
+        self.ui.comboGrupoModulos.clear()
+        self.ui.comboGrupoModulos.addItems(nombres)
+
+    def actualizar_tabla_modulos(self):
+        ciclo_sel = self.ui.comboCicloModulos.currentText().strip()
+        nombre_sel = self.ui.comboGrupoModulos.currentText().strip()
+        modulos = self.modulos_cache or []
+        filtrados = []
+
+        for m in modulos:
+            if ciclo_sel and m.get("ciclo") != ciclo_sel:
+                continue
+            if nombre_sel and m.get("nombre") != nombre_sel:
+                continue
+            filtrados.append(m)
+
+        self._cargar_modulos_en_tabla_desde_lista(filtrados)

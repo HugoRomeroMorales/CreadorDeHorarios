@@ -281,7 +281,7 @@ class Ui_MainWindow(object):
         self.btnEliminarProfesor.setText(_translate("MainWindow", "Eliminar"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabProfesores), _translate("MainWindow", "Profesores"))
         self.labelCicloMod.setText(_translate("MainWindow", "Ciclo:"))
-        self.labelGrupoMod.setText(_translate("MainWindow", "Grupo:"))
+        self.labelGrupoMod.setText(_translate("MainWindow", "Asignatura:"))
         self.btnCargarModulos.setText(_translate("MainWindow", "Cargar módulos"))
         item = self.tablaModulos.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Nombre módulo"))
