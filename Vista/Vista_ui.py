@@ -218,6 +218,11 @@ class Ui_MainWindow(object):
         self.btnGuardarHorario = QtWidgets.QPushButton(self.tabHorario)
         self.btnGuardarHorario.setObjectName("btnGuardarHorario")
         self.horizontalLayout_filtrosHor.addWidget(self.btnGuardarHorario)
+
+        self.btnExportarCSV = QtWidgets.QPushButton(self.tabHorario)
+        self.btnExportarCSV.setObjectName("btnExportarCSV")
+        self.horizontalLayout_filtrosHor.addWidget(self.btnExportarCSV)
+
         self.verticalLayout_horario.addLayout(self.horizontalLayout_filtrosHor)
         self.tablaHorario = QtWidgets.QTableWidget(self.tabHorario)
         self.tablaHorario.setObjectName("tablaHorario")
@@ -309,13 +314,16 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Tipo"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabPreferencias), _translate("MainWindow", "Preferencias"))
         self.labelCicloHor.setText(_translate("MainWindow", "Ciclo:"))
-        self.labelGrupoHor.setText(_translate("MainWindow", "Grupo:"))
+        self.labelGrupoHor.setText(_translate("MainWindow", "Asignatura:"))
         self.labelModoGeneracion.setText(_translate("MainWindow", "Modo:"))
         self.comboModoGeneracion.setItemText(0, _translate("MainWindow", "Backtracking básico"))
         self.comboModoGeneracion.setItemText(1, _translate("MainWindow", "Backtracking restricciones fuertes"))
         self.comboModoGeneracion.setItemText(2, _translate("MainWindow", "Backtracking relajado (lvl 2)"))
         self.btnGenerarHorario.setText(_translate("MainWindow", "Generar horario"))
         self.btnGuardarHorario.setText(_translate("MainWindow", "Guardar horario"))
+
+        self.btnExportarCSV.setText(_translate("MainWindow", "Exportar CSV"))
+
         item = self.tablaHorario.verticalHeaderItem(0)
         item.setText(_translate("MainWindow", "1ª"))
         item = self.tablaHorario.verticalHeaderItem(1)
