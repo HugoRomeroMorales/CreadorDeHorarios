@@ -1,5 +1,11 @@
 import sys
 
+from Controller.Controller_db import (
+    get_profesor,
+    get_modulo,
+    get_preferencias_por_profesor
+)
+
 SLOTS_POR_DIA = 6
 horas = [
     "8:30-9:25",
@@ -16,28 +22,17 @@ dias = [
     "Jueves",
     "Viernes"
 ]
-grupos = [
-    "1º DAM",
-    "2º DAM"
-]
+
+grupos = []
 
 class Prof:
     """
     Clase que representa a un profesor y sus restricciones.
-
-    Atributos:
-        _id (int): Identificador único del profesor.
-        _disponibilidad (list[bool]): Lista de booleanos indicando disponibilidad por slot horario.
-        _preferencia (list): Lista de preferencias (no utilizada en la lógica core actual).
-        _nombre (str): Nombre del profesor.
-        _modulo (str): Asignatura que imparte.
-        _horas_maximas (int): Número máximo de horas que puede impartir.
-        _horas_minimas (int): Número mínimo de horas (no utilizada en la lógica actual).
     """
     def __init__(self, id, disponibilidad, preferencia, nombre, modulo, horas_maximas, horas_minimas):
         self._id = id
-        self._disponibilidad = disponibilidad  
-        self._preferencia = preferencia        
+        self._disponibilidad = disponibilidad
+        self._preferencia = preferencia
         self._nombre = nombre
         self._modulo = modulo
         self._horas_maximas = horas_maximas
@@ -49,42 +44,84 @@ class Prof:
     def get_modulo(self): return self._modulo
     def get_horas_maximas(self): return self._horas_maximas
 
+def convertir_preferencias_a_disponibilidad(id_prof):
+    """
+    Consulta las preferencias/restricciones en la BD y genera la lista de 6 booleanos.
+    Por defecto devuelve 'Disponible todo el día' si no hay datos.
+    """
+    disponibilidad = [True] * SLOTS_POR_DIA
+    
+    return disponibilidad
 
-# --- CONFIGURACIÓN DE ESCENARIOS ---
+def cargar_profesores_desde_bd():
+    """
+    Recupera los profesores de la base de datos usando el Controller
+    y crea la lista de objetos 'Prof'.
+    """
+    lista_objs = []
+    
+    profesores_db = get_profesor() 
+    
+    print(f"--- Cargando {len(profesores_db)} profesores desde la Base de Datos ---")
 
-# Definición de disponibilidades comunes
-TodoElDia = [True, True, True, True, True, True]           
-SoloMananas = [True, True, True, False, False, False]
-SoloTardes = [False, False, False, True, True, True]
+    for p_data in profesores_db:
+        
+        p_id = p_data[0]
+        p_nombre = p_data[1]
+        
+        p_modulo = "Módulo Genérico"
+        
+        p_horas_max = p_data[4] if len(p_data) > 4 else 20
+        p_horas_min = 0
 
+        p_disponibilidad = convertir_preferencias_a_disponibilidad(p_id)
+        
+        nuevo_prof = Prof(
+            id=p_id,
+            disponibilidad=p_disponibilidad,
+            preferencia=[],
+            nombre=p_nombre,
+            modulo=p_modulo,
+            horas_maximas=p_horas_max,
+            horas_minimas=p_horas_min
+        )
+        
+        lista_objs.append(nuevo_prof)
+        print(f" -> Prof cargado: {nuevo_prof.get_nombre()}")
+        
+    return lista_objs
 
-ESCENARIO_ACTIVO = 2 
+def cargar_grupos_desde_bd():
+    """
+    Recupera los grupos (clases) de la base de datos usando get_modulo.
+    """
+    lista_nombres_grupos = []
+    
+    try:
+        grupos_db = get_modulo() 
+        print(f"--- Cargando {len(grupos_db)} clases/grupos desde la Base de Datos ---")
+        
+        for g_data in grupos_db:
+            g_nombre = g_data[1] 
+            lista_nombres_grupos.append(g_nombre)
+            print(f" -> Clase cargada: {g_nombre}")
+            
+    except Exception as e:
+        print(f"Error al cargar clases desde BD: {e}")
+        lista_nombres_grupos = ["Clase A (Fallback)", "Clase B (Fallback)"]
+        
+    return lista_nombres_grupos
 
-lista_profesores = []
+try:
+    lista_profesores = cargar_profesores_desde_bd()
+except Exception as e:
+    print(f"Error al conectar con la BD o procesar profesores: {e}")
+    lista_profesores = [] 
 
-if ESCENARIO_ACTIVO == 1:
-    print("--- CARGANDO ESCENARIO 1: FUNCIONAL (Sobra oferta de horas) ---")
-    # Demanda: 60 horas (2 grupos * 30 slots).
-    # Oferta: 18*3 + 12 + 10 = 76 horas. Hay margen de sobra.
-    p1 = Prof(1, TodoElDia, [], "Juan (Mates)", "Matemáticas", 18, 0)
-    p2 = Prof(2, TodoElDia, [], "Ana (Lengua)", "Lengua", 18, 0)
-    p3 = Prof(3, TodoElDia, [], "Luis (Prog)", "Programación", 18, 0)
-    p4 = Prof(4, TodoElDia, [], "Maria (BBDD)", "Base de Datos", 12, 0)
-    p5 = Prof(5, TodoElDia, [], "Pedro (FOL)", "FOL", 10, 0)
-    lista_profesores = [p1, p2, p3, p4, p5]
+grupos = cargar_grupos_desde_bd()
 
-elif ESCENARIO_ACTIVO == 2:
-    print("--- CARGANDO ESCENARIO 2: COMPLICADO (Restricciones horarias y horas justas) ---")
-    # Demanda: 60 horas.
-    # Oferta: 20 + 20 + 10 + 10 + 5 = 65 horas (muy justo).
-    # Restricción fuerte: Ana solo puede mañanas, Luis solo tardes.
-    # Esto fuerza conflictos si ambos grupos necesitan Lengua por la tarde.
-    p1 = Prof(1, TodoElDia,   [], "Juan (Mates)", "Matemáticas", 20, 0) # Flexible
-    p2 = Prof(2, SoloMananas, [], "Ana (Lengua)", "Lengua", 20, 0)      # Restricción fuerte
-    p3 = Prof(3, SoloTardes,  [], "Luis (Prog)", "Programación", 10, 0) # Restricción fuerte
-    p4 = Prof(4, TodoElDia,   [], "Maria (BBDD)", "Base de Datos", 10, 0)
-    p5 = Prof(5, TodoElDia,   [], "Pedro (FOL)", "FOL", 5, 0)           # Pocas horas
-    lista_profesores = [p1, p2, p3, p4, p5]
+if not grupos:
+    grupos = ["Grupo Único"]
 
 
 tareas_globales = []
@@ -114,12 +151,6 @@ info_fallo = {
 def contar_horas_asignadas(id_prof):
     """
     Cuenta el número total de horas que un profesor tiene asignadas en el horario actual.
-
-    Argumentos:
-        id_prof (int): El identificador del profesor.
-
-    Devuelve:
-        int: La cantidad de veces que el profesor aparece en el diccionario horario.
     """
     cuenta = 0
     for profe_asignado in horario.values():
@@ -130,13 +161,6 @@ def contar_horas_asignadas(id_prof):
 def esta_ocupado_a_esta_hora(id_prof, slot_objetivo):
     """
     Verifica si un profesor ya está impartiendo clase en otro grupo a la misma hora global.
-
-    Argumentos:
-        id_prof (int): El identificador del profesor.
-        slot_objetivo (int): El índice global del tiempo (0-29) que se quiere verificar.
-
-    Devuelve:
-        bool: True si el profesor ya tiene una asignación en ese slot de tiempo, False en caso contrario.
     """
     for indice_tarea, profe in horario.items():
         if profe.get_id() == id_prof:
@@ -147,15 +171,7 @@ def esta_ocupado_a_esta_hora(id_prof, slot_objetivo):
 
 def crear_hueco(prof_id, slot_actual):
     """
-    Analiza si asignar un profesor al slot actual generaría un hueco (gap) inválido en su horario personal del día.
-    Un hueco se considera inválido si hay una o más horas libres entre dos clases asignadas en el mismo día.
-
-    Argumentos:
-        prof_id (int): El identificador del profesor.
-        slot_actual (int): El índice global del tiempo (0-29).
-
-    Devuelve:
-        bool: True si la asignación crea un hueco no permitido, False en caso contrario.
+    Analiza si asignar un profesor al slot actual generaría un hueco (gap) inválido.
     """
     indice_dia_actual = slot_actual // SLOTS_POR_DIA
     inicio_dia_indice = indice_dia_actual * SLOTS_POR_DIA
@@ -184,18 +200,7 @@ def crear_hueco(prof_id, slot_actual):
 
 def generar_horario(indice_tarea):
     """
-    Función recursiva principal que implementa el algoritmo de Backtracking para asignar profesores.
-
-    Argumentos:
-        indice_tarea (int): El índice de la tarea actual en la lista `tareas_globales` que se intenta resolver.
-
-    Variables Globales Modificadas:
-        horario: Diccionario donde se guardan las asignaciones válidas.
-        mejor_horario_copia: Snapshot del horario más completo alcanzado antes de un fallo.
-        info_fallo: Registro de diagnóstico sobre por qué falló la rama más profunda.
-
-    Devuelve:
-        bool: True si se completa el horario satisfactoriamente, False si no se encuentra solución por esta rama.
+    Algoritmo de Backtracking recursivo.
     """
     global mejor_horario_copia
 
@@ -210,7 +215,7 @@ def generar_horario(indice_tarea):
     tarea = tareas_globales[indice_tarea]
     indice_hora_diaria = tarea["indice_hora_diaria"]
     slot_absoluto = tarea["indice_slot_global"]
-   
+    
     lista_profesores.sort(key=lambda p: p.get_horas_maximas() - contar_horas_asignadas(p.get_id()), reverse=True)
 
     for profesor in lista_profesores:
@@ -248,8 +253,7 @@ def generar_horario(indice_tarea):
 
 def imprimir_tabla_multi_grupo():
     """
-    Imprime el horario generado en formato de tabla por consola, con columnas separadas por grupo.
-    Muestra el módulo y el nombre del profesor para cada celda.
+    Imprime el horario en formato tabla.
     """
     ancho_col = 25
     encabezado = f"{'DÍA/HORA':<15} |"
@@ -261,7 +265,6 @@ def imprimir_tabla_multi_grupo():
     print("=" * len(encabezado))
 
     dia_actual = ""
-    
     paso = len(grupos)
     
     for i in range(0, len(tareas_globales), paso):
@@ -282,7 +285,7 @@ def imprimir_tabla_multi_grupo():
                 texto = f"{p.get_modulo()} ({p.get_nombre().split()[0]})"
                 
                 if "CONFLICTO" in p.get_nombre():
-                    texto = "!! CONFLICTO !!"
+                    texto = "CONFLICTO"
             else:
                 texto = "---"
             
@@ -297,10 +300,6 @@ def imprimir_tabla_multi_grupo():
             print("." * len(encabezado))
 
 def imprimir_diagnostico():
-    """
-    Imprime información sobre el punto donde falló el algoritmo, mostrando el slot problemático
-    y las razones por las que cada profesor fue descartado.
-    """
     indice = info_fallo["profundidad_maxima"]
     if indice < len(tareas_globales):
         slot = tareas_globales[indice]
@@ -308,11 +307,11 @@ def imprimir_diagnostico():
         for nombre, razon in info_fallo["razones"].items():
             print(f" - {nombre:<15}: {razon}")
 
-print("Generando horario para múltiples grupos...")
+print("Generando horario utilizando datos de Base de Datos...")
 exito = generar_horario(0)
 
 if exito:
-    print("¡Horario Completo!")
+    print("Horario Completo Generado")
     imprimir_tabla_multi_grupo()
 else:
     print("Incompleto. Mostrando mejor intento:")
