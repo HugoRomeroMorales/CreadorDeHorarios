@@ -1,7 +1,9 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox, QInputDialog, QTableWidgetItem
-from PyQt5 import uic
+from Controller.algoritmo_backtracking import generar_matriz_horario, Prof
+from PyQt5.QtGui import QColor
+
 
 from Vista.Vista_ui import Ui_MainWindow
 from Controller.Controller_db import (
@@ -23,6 +25,9 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        
+        self.ui.labelGrupoHor.hide()
+        self.ui.comboGrupoHorario.hide()
 
         self.ui.tablaHorario.setRowCount(6)
         self.ui.tablaHorario.setVerticalHeaderLabels(
@@ -50,9 +55,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
         header_mod = self.ui.tablaModulos.horizontalHeader()
         header_mod.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        
+        self.ui.btnGenerarHorario.clicked.connect(self.on_generar_horario)
+        self.cargar_ciclos_en_combobox()
 
         self.ui.comboDiaPref.clear()
         self.ui.comboDiaPref.addItems(["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"])
+        
+        self.colores_prof = {}
+        self.cargar_colores_profesores()
 
         horas = {
             "8:30-9:25": 1,
@@ -611,3 +622,181 @@ class MainWindow(QtWidgets.QMainWindow):
             filtrados.append(m)
 
         self._cargar_modulos_en_tabla_desde_lista(filtrados)
+        
+    def on_generar_horario(self):
+        print(">>> Botón 'Generar horario' pulsado")
+
+        ciclo = self.ui.comboCicloHorario.currentText().strip()
+        if not ciclo:
+            QMessageBox.warning(
+                self,
+                "Generar horario",
+                "Selecciona primero un ciclo (DAM1, DAM2, ...)"
+            )
+            return
+
+        datos = generar_matriz_horario(ciclo_filtrado=ciclo)
+
+        # pintar directamente usando el diccionario devuelto
+        self.rellenar_tabla_horario(datos)
+
+    def cargar_ciclos_en_combobox(self):
+        combo_ciclo = self.ui.comboCicloHorario
+        combo_ciclo.clear()
+
+        try:
+            modulos = get_modulo()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudieron cargar los ciclos:\n{e}")
+            return
+
+        ciclos = sorted({m.get("ciclo") for m in modulos if m.get("ciclo")})
+
+        combo_ciclo.addItem("")  # opción vacía
+        for c in ciclos:
+            combo_ciclo.addItem(c)
+
+    def es_slot_preferencia_conflictiva(self, profe, tarea):
+        """
+        Devuelve True si para este profesor y esta tarea (día + hora)
+        hay una preferencia de tipo 'Evitar si es posible' (nivel = 3).
+        En ese caso pintaremos la celda en rojo.
+        """
+        id_prof = profe.get_id_docente()
+        if id_prof is None or id_prof < 0:
+            # id negativo lo usamos como dummy de conflicto
+            return True
+
+        dia_tarea = tarea["nombre_dia"] 
+        # En BD seguramente guardas 'Miércoles' con tilde
+        if dia_tarea == "Miercoles":
+            dia_bd = "Miércoles"
+        else:
+            dia_bd = dia_tarea
+
+        # En la tabla Preferencias guardas hora_inicio como 1..6
+        hora_inicio_tarea = tarea["indice_hora_diaria"] + 1  # 0..5 -> 1..6
+
+        try:
+            prefs = get_preferencias_por_profesor(id_prof)
+        except Exception as e:
+            print(f"[PREF] Error al cargar preferencias de prof {id_prof}: {e}")
+            return False
+
+        for pref in prefs:
+            dia_pref = pref.get("dia_semana")
+            hora_pref = pref.get("hora_inicio")
+            nivel = pref.get("nivel", 2)  # 1=Muy pref, 2=Neutra, 3=Evitar
+
+            if dia_pref == dia_bd and hora_pref == hora_inicio_tarea:
+                # Si el profe dijo "Evitar si es posible", lo marcamos en rojo
+                if nivel == 3:
+                    return True
+
+        return False
+
+    def rellenar_tabla_horario(self, datos):
+        tabla = self.ui.tablaHorario
+
+        # Limpiar toda la tabla (6 filas x 5 columnas)
+        filas = tabla.rowCount()
+        cols = tabla.columnCount()
+        for f in range(filas):
+            for c in range(cols):
+                tabla.setItem(f, c, QTableWidgetItem(""))
+
+        horario     = datos.get("horario", {})
+        tareas      = datos.get("tareas", [])
+        grupos      = datos.get("grupos", [])
+        exito       = datos.get("exito", True)
+        info_fallo  = datos.get("info_fallo", {})
+        indice_conf = info_fallo.get("profundidad_maxima", -1)
+
+        if not horario:
+            print(" [INFO] No hay asignaciones en el horario.")
+            return
+
+        # De momento, mostramos solo el PRIMER grupo
+        grupo_mostrado = grupos[0] if grupos else None
+
+        indice_dia = {
+            "Lunes": 0,
+            "Martes": 1,
+            "Miercoles": 2,
+            "Miércoles": 2,  # por si acaso
+            "Jueves": 3,
+            "Viernes": 4,
+        }
+
+        for indice_tarea, profe in horario.items():
+            tarea = tareas[indice_tarea]
+
+            # Filtrar por grupo (DAM1 / DAM2)
+            if grupo_mostrado and tarea["nombre_grupo"] != grupo_mostrado:
+                continue
+
+            fila = tarea["indice_hora_diaria"]           # 0..5
+            col  = indice_dia.get(tarea["nombre_dia"], 0)  # 0..4
+
+            if hasattr(profe, "get_modulo"):
+                texto = f"{profe.get_modulo()} ({profe.get_nombre().split()[0]})"
+            else:
+                texto = "ERROR"
+
+            item = QTableWidgetItem(texto)
+
+            # 🎨 1) COLOR BASE DEL PROFESOR (tabla Profesor.color)
+            try:
+                if hasattr(profe, "get_id_docente"):
+                    id_docente = profe.get_id_docente()
+                else:
+                    id_docente = None
+
+                if id_docente is not None:
+                    # por si no se ha cargado aún
+                    if not hasattr(self, "colores_prof"):
+                        self.cargar_colores_profesores()
+
+                    color_hex = self.colores_prof.get(id_docente)
+                    if color_hex:
+                        item.setBackground(QColor(color_hex))
+            except Exception as e:
+                print(f"[COLORES] Error aplicando color al prof {profe.get_nombre()}: {e}")
+
+            # 🔴 2) Si hay preferencia "Evitar si es posible", marcamos en rojito encima
+            try:
+                if self.es_slot_preferencia_conflictiva(profe, tarea):
+                    item.setBackground(QColor(255, 200, 200))
+            except Exception as e:
+                print(f"[PINTAR PREF] Error comprobando preferencias: {e}")
+
+            # 🔴 3) Si el algoritmo no encontró solución perfecta,
+            #      resaltamos la celda conflictiva principal más fuerte.
+            if not exito and indice_tarea == indice_conf:
+                item.setBackground(QColor(255, 150, 150))
+
+            tabla.setItem(fila, col, item)
+
+            
+            
+    def cargar_colores_profesores(self):
+        self.colores_prof = {}
+        try:
+            profesores = get_profesor()
+        except Exception as e:
+            print(f"[COLORES] Error al cargar profesores: {e}")
+            return
+
+        for p in profesores:
+            pid = p.get("id_prof")
+            color = p.get("color")  # campo de tu tabla
+            if pid is not None and color:
+                self.colores_prof[pid] = color
+                
+    
+
+
+
+
+
+

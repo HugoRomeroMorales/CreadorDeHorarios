@@ -30,7 +30,7 @@
                         <property name="currentIndex">
                             <number>3</number>
                         </property>
-                        
+
                         <widget class="QWidget" name="tabProfesores">
                             <attribute name="title">
                                 <string>Profesores</string>
@@ -149,7 +149,7 @@
                                 </item>
                             </layout>
                         </widget>
-                        
+
                         <widget class="QWidget" name="tabModulos">
                             <attribute name="title">
                                 <string>Módulos</string>
@@ -263,13 +263,13 @@
                                 </item>
                             </layout>
                         </widget>
-                        
+
                         <widget class="QWidget" name="tabPreferencias">
                             <attribute name="title">
                                 <string>Preferencias</string>
                             </attribute>
                             <layout class="QVBoxLayout" name="verticalLayout_pref">
-                                
+
                                 <item>
                                     <layout class="QHBoxLayout" name="horizontalLayout_profPref">
                                         <item>
@@ -284,7 +284,7 @@
                                         </item>
                                     </layout>
                                 </item>
-                                
+
                                 <item>
                                     <widget class="QLabel" name="labelDispTitulo">
                                         <property name="text">
@@ -302,7 +302,7 @@
                                         </property>
                                     </widget>
                                 </item>
-                                
+
                                 <item>
                                     <widget class="QLabel" name="labelPrefTitulo">
                                         <property name="text">
@@ -320,7 +320,7 @@
                                         </property>
                                     </widget>
                                 </item>
-                                
+
                                 <item>
                                     <layout class="QHBoxLayout" name="horizontalLayout_botonesPref">
                                         <item>
@@ -347,7 +347,7 @@
                                 </item>
                             </layout>
                         </widget>
-                        
+
                         <widget class="QWidget" name="tabHorario">
                             <attribute name="title">
                                 <string>Horario</string>
