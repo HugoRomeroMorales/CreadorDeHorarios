@@ -20,6 +20,8 @@ from Controller.Controller_db import (
     get_preferencias_por_profesor,
     insertar_preferencia,
     eliminar_preferencia,
+    get_horario_ciclo,
+    guardar_horario_ciclo,
 )
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -59,6 +61,7 @@ class MainWindow(QtWidgets.QMainWindow):
         header_mod.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         
         self.ui.btnGenerarHorario.clicked.connect(self.on_generar_horario)
+        self.ui.btnGuardarHorario.clicked.connect(self.on_guardar_horario) 
         self.cargar_ciclos_en_combobox()
 
         self.ui.comboDiaPref.clear()
@@ -639,10 +642,20 @@ class MainWindow(QtWidgets.QMainWindow):
             )
             return
 
-        datos = generar_matriz_horario(ciclo_filtrado=ciclo)
+        try:
+            filas_bd = get_horario_ciclo(ciclo)  
+        except Exception as e:
+            print(f"[HORARIO] Error al leer BD: {e}")
+            filas_bd = []
 
-        # pintar directamente usando el diccionario devuelto
-        self.rellenar_tabla_horario(datos)
+        if filas_bd:
+            print(f"[HORARIO] Cargando horario existente para {ciclo} ({len(filas_bd)} filas).")
+            self.rellenar_tabla_desde_bd(filas_bd)
+        else:
+
+            print(f"[HORARIO] No hay horario guardado para {ciclo}. Generando nuevo...")
+            datos = generar_matriz_horario(ciclo_filtrado=ciclo)
+            self.rellenar_tabla_horario(datos)
 
     def cargar_ciclos_en_combobox(self):
         combo_ciclo = self.ui.comboCicloHorario
@@ -660,43 +673,43 @@ class MainWindow(QtWidgets.QMainWindow):
         for c in ciclos:
             combo_ciclo.addItem(c)
 
-    def es_slot_preferencia_conflictiva(self, profe, tarea):
-        """
-        Devuelve True si para este profesor y esta tarea (día + hora)
-        hay una preferencia de tipo 'Evitar si es posible' (nivel = 3).
-        En ese caso pintaremos la celda en rojo.
-        """
-        id_prof = profe.get_id_docente()
-        if id_prof is None or id_prof < 0:
-            # id negativo lo usamos como dummy de conflicto
-            return True
+    def es_slot_preferencia_conflictiva(self, profe_o_id, tarea):
+        if hasattr(profe_o_id, "get_id_docente"):
+            id_prof = profe_o_id.get_id_docente()
+        else:
+            # si es un número o diccionario
+            try:
+                id_prof = int(profe_o_id)
+            except Exception:
+                return False  # si no se puede interpretar, no marcamos rojo
 
-        dia_tarea = tarea["nombre_dia"] 
-        # En BD seguramente guardas 'Miércoles' con tilde
-        if dia_tarea == "Miercoles":
-            dia_bd = "Miércoles"
+        if id_prof is None or id_prof < 0:
+            return False
+
+        dia_tarea = tarea["nombre_dia"]
+
+        # Asegurar coincidencia exacta con la BD
+        if dia_tarea == "Miercoles":       # tu algoritmo genera "Miercoles"
+            dia_bd = "Miércoles"           # en BD guardas "Miércoles"
         else:
             dia_bd = dia_tarea
 
-        # En la tabla Preferencias guardas hora_inicio como 1..6
-        hora_inicio_tarea = tarea["indice_hora_diaria"] + 1  # 0..5 -> 1..6
+        hora_inicio_tarea = tarea["indice_hora_diaria"] + 1
 
         try:
             prefs = get_preferencias_por_profesor(id_prof)
         except Exception as e:
-            print(f"[PREF] Error al cargar preferencias de prof {id_prof}: {e}")
+            print(f"[PREF] Error al cargar preferencias del prof {id_prof}: {e}")
             return False
 
         for pref in prefs:
             dia_pref = pref.get("dia_semana")
             hora_pref = pref.get("hora_inicio")
-            nivel = pref.get("nivel", 2)  # 1=Muy pref, 2=Neutra, 3=Evitar
+            nivel = pref.get("nivel", 2)  # 3 = Evitar
 
             if dia_pref == dia_bd and hora_pref == hora_inicio_tarea:
-                # Si el profe dijo "Evitar si es posible", lo marcamos en rojo
                 if nivel == 3:
-                    return True
-
+                    return True  
         return False
 
     def rellenar_tabla_horario(self, datos):
@@ -748,8 +761,28 @@ class MainWindow(QtWidgets.QMainWindow):
                 texto = "ERROR"
 
             item = QTableWidgetItem(texto)
+            
+            if hasattr(profe, "get_modulo"):
+                texto = f"{profe.get_modulo()} ({profe.get_nombre().split()[0]})"
+            else:
+                texto = "ERROR"
 
-            # 🎨 1) COLOR BASE DEL PROFESOR (tabla Profesor.color)
+            item = QTableWidgetItem(texto)
+            
+            try:
+                if hasattr(profe, "get_id_docente"):
+                    id_prof = profe.get_id_docente()
+                else:
+                    id_prof = None
+                id_modulo = profe.get_id() if hasattr(profe, "get_id") else None
+
+                item.setData(Qt.UserRole, {
+                    "id_prof": id_prof,
+                    "id_modulo": id_modulo,
+                })
+            except Exception as e:
+                print(f"[META] Error guardando metadatos en celda: {e}")
+            
             try:
                 if hasattr(profe, "get_id_docente"):
                     id_docente = profe.get_id_docente()
@@ -757,7 +790,6 @@ class MainWindow(QtWidgets.QMainWindow):
                     id_docente = None
 
                 if id_docente is not None:
-                    # por si no se ha cargado aún
                     if not hasattr(self, "colores_prof"):
                         self.cargar_colores_profesores()
 
@@ -767,15 +799,12 @@ class MainWindow(QtWidgets.QMainWindow):
             except Exception as e:
                 print(f"[COLORES] Error aplicando color al prof {profe.get_nombre()}: {e}")
 
-            # 🔴 2) Si hay preferencia "Evitar si es posible", marcamos en rojito encima
             try:
                 if self.es_slot_preferencia_conflictiva(profe, tarea):
                     item.setBackground(QColor(255, 200, 200))
             except Exception as e:
                 print(f"[PINTAR PREF] Error comprobando preferencias: {e}")
 
-            # 🔴 3) Si el algoritmo no encontró solución perfecta,
-            #      resaltamos la celda conflictiva principal más fuerte.
             if not exito and indice_tarea == indice_conf:
                 item.setBackground(QColor(255, 150, 150))
 
@@ -835,3 +864,114 @@ class MainWindow(QtWidgets.QMainWindow):
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo exportar este horario :( :\n{e}")
+            
+    def rellenar_tabla_desde_bd(self, filas_bd):
+        tabla = self.ui.tablaHorario
+
+        # Limpiar tabla
+        filas = tabla.rowCount()
+        cols = tabla.columnCount()
+        for f in range(filas):
+            for c in range(cols):
+                tabla.setItem(f, c, QTableWidgetItem(""))
+
+        indice_dia = {
+            "Lunes": 0,
+            "Martes": 1,
+            "Miercoles": 2,
+            "Miércoles": 2,
+            "Jueves": 3,
+            "Viernes": 4,
+        }
+
+        for fila_h in filas_bd:
+            dia = fila_h.get("dia_semana")
+            hora_inicio = fila_h.get("hora_inicio")  # 1..6
+            id_prof = fila_h.get("id_prof")
+            id_modulo = fila_h.get("id_mod")
+            nombre_prof = fila_h.get("nombre_prof", "")
+            nombre_mod = fila_h.get("nombre_mod", "")
+
+            if not dia or not hora_inicio:
+                continue
+
+            fila = int(hora_inicio) - 1
+            col = indice_dia.get(dia, None)
+            if col is None:
+                continue
+
+            texto = f"{nombre_mod} ({nombre_prof.split()[0]})"
+            item = QTableWidgetItem(texto)
+
+            # metadatos para poder guardar luego
+            item.setData(Qt.UserRole, {
+                "id_prof": id_prof,
+                "id_modulo": id_modulo,
+            })
+
+            # color del profesor
+            try:
+                color_hex = self.colores_prof.get(id_prof)
+                if color_hex:
+                    item.setBackground(QColor(color_hex))
+            except Exception as e:
+                print(f"[COLORES BD] Error aplicando color: {e}")
+
+            # rojito si viola preferencia nivel 3
+            tarea_fake = {
+                "nombre_dia": dia,
+                "indice_hora_diaria": int(hora_inicio) - 1
+            }
+            try:
+                if self.es_slot_preferencia_conflictiva(id_prof, tarea_fake):
+                    item.setBackground(QColor(255, 200, 200))
+            except Exception as e:
+                print(f"[PREF BD] Error comprobando preferencias: {e}")
+
+            tabla.setItem(fila, col, item)
+
+    def on_guardar_horario(self):
+        ciclo = self.ui.comboCicloHorario.currentText().strip()
+        if not ciclo:
+            QMessageBox.warning(
+                self,
+                "Guardar horario",
+                "Selecciona primero un ciclo (DAM1, DAM2, ...)"
+            )
+            return
+
+        tabla = self.ui.tablaHorario
+        filas = tabla.rowCount()
+        columnas = tabla.columnCount()
+
+        # asumir que las cabeceras horizontales son: Lunes, Martes, ...
+        dias = [tabla.horizontalHeaderItem(c).text() for c in range(columnas)]
+
+        slots = []
+
+        for f in range(filas):
+            hora_inicio = f + 1   # 1..6
+            for c in range(columnas):
+                item = tabla.item(f, c)
+                if not item or not item.text().strip():
+                    continue
+
+                meta = item.data(Qt.UserRole) or {}
+                id_prof = meta.get("id_prof")
+                id_modulo = meta.get("id_modulo")
+                dia_semana = dias[c]
+
+                slots.append({
+                    "ciclo": ciclo,
+                    "dia_semana": dia_semana,
+                    "hora_inicio": hora_inicio,
+                    "id_prof": id_prof,
+                    "id_mod": id_modulo,
+                })
+
+        try:
+            guardar_horario_ciclo(ciclo, slots)
+            QMessageBox.information(self, "Guardar horario", "Horario guardado correctamente en la BD.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo guardar el horario:\n{e}")
+

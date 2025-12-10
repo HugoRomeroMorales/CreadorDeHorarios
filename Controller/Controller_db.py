@@ -77,3 +77,31 @@ def insertar_preferencia(id_prof: int, dia: str, hora_inicio: int, hora_final: i
 def eliminar_preferencia(id_pref: int):
     supabase.table("Preferencias").delete().eq("id_pref", id_pref).execute()
     
+def get_horario_ciclo(ciclo: str):
+    resp = (
+        supabase
+        .table("Horario")      
+        .select("*")
+        .eq("ciclo", ciclo)
+        .execute()
+    )
+    filas = resp.data or []
+
+    profes = {p["id_prof"]: p.get("nombre", "") for p in get_profesor()}
+    modulos = {m["id_modulo"]: m.get("nombre", "") for m in get_modulo()}
+
+    for fila in filas:
+        id_prof = fila.get("id_prof")
+        id_mod  = fila.get("id_mod")
+
+        fila["nombre_prof"] = profes.get(id_prof, "")
+        fila["nombre_mod"]  = modulos.get(id_mod, "")
+
+    return filas
+
+
+def guardar_horario_ciclo(ciclo: str, slots: list[dict]):
+    supabase.table("Horario").delete().eq("ciclo", ciclo).execute()
+    if slots:
+        supabase.table("Horario").insert(slots).execute()
+
