@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import QMessageBox, QInputDialog, QTableWidgetItem
 from Controller.algoritmo_backtracking import generar_matriz_horario, Prof
 from PyQt5.QtGui import QColor
 
+from PyQt5.QtWidgets import QMessageBox, QInputDialog, QTableWidgetItem, QFileDialog
+from PyQt5 import uic
 
 from Vista.Vista_ui import Ui_MainWindow
 from Controller.Controller_db import (
@@ -98,6 +100,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.cargar_ciclos()
         self.ui.comboCicloModulos.currentTextChanged.connect(self.on_ciclo_modulo_cambiado)
         self.ui.comboGrupoModulos.currentTextChanged.connect(self.actualizar_tabla_modulos)
+
+        self.ui.btnExportarCSV.clicked.connect(self.exportar_csv)
 
     def cargar_profesores_en_tabla(self):
         try:
@@ -793,10 +797,41 @@ class MainWindow(QtWidgets.QMainWindow):
             if pid is not None and color:
                 self.colores_prof[pid] = color
                 
-    
+#Aqui tenemos el metodo de exportar csv, la funcionalidad del boton  es que cuando el usuario le da el boton para guardar la tabla en formato CSV, se recorre la tabla entera transformandola en filas y celdas para adaptarlo al csv y se muestra un mensaje de exito o de error al terminar, así completamos unas de las partes y nuestros usuarios saben que han hecho bien la exportación o no. 
+    def exportar_csv(self):
+        import csv
 
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Guardar horario como CSV",
+            "horario.csv",
+            "CSV (*.csv)"
+        )
+        if not path:
+            return
 
+        tabla = self.ui.tablaHorario
+        filas = tabla.rowCount()
+        columnas = tabla.columnCount()
 
+        try:
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
 
+                headers = [tabla.horizontalHeaderItem(c).text() for c in range(columnas)]
+                writer.writerow([""] + headers)
 
+                for r in range(filas):
+                    nombre_hora = tabla.verticalHeaderItem(r).text()
+                    row = [nombre_hora]
 
+                    for c in range(columnas):
+                        item = tabla.item(r, c)
+                        row.append(item.text() if item else "")
+
+                    writer.writerow(row)
+
+            QMessageBox.information(self, "Éxito", " El horario ha sido  exportado correctamente ;).")
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo exportar este horario :( :\n{e}")
