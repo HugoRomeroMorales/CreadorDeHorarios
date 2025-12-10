@@ -651,6 +651,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if filas_bd:
             print(f"[HORARIO] Cargando horario existente para {ciclo} ({len(filas_bd)} filas).")
             self.rellenar_tabla_desde_bd(filas_bd)
+            return
         else:
 
             print(f"[HORARIO] No hay horario guardado para {ciclo}. Generando nuevo...")
