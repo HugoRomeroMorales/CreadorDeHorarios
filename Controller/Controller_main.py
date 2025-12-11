@@ -117,7 +117,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.comboCicloModulos.currentTextChanged.connect(self.on_ciclo_modulo_cambiado)
         self.ui.comboGrupoModulos.currentTextChanged.connect(self.actualizar_tabla_modulos)
 
-        self.ui.btnExportarCSV.clicked.connect(self.exportar_csv)
+        """self.ui.btnExportarCSV.clicked.connect(self.exportar_csv)"""
+        self.ui.btnExportarCSV.clicked.connect(self.exportar_excel)
 
     def cargar_profesores_en_tabla(self):
         try:
@@ -853,7 +854,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.colores_prof[pid] = color
                 
 #Aqui tenemos el metodo de exportar csv, la funcionalidad del boton  es que cuando el usuario le da el boton para guardar la tabla en formato CSV, se recorre la tabla entera transformandola en filas y celdas para adaptarlo al csv y se muestra un mensaje de exito o de error al terminar, así completamos unas de las partes y nuestros usuarios saben que han hecho bien la exportación o no. 
-    def exportar_csv(self):
+    """def exportar_csv(self):
         import csv
 
         path, _ = QFileDialog.getSaveFileName(
@@ -889,7 +890,7 @@ class MainWindow(QtWidgets.QMainWindow):
             QMessageBox.information(self, "Éxito", " El horario ha sido  exportado correctamente ;).")
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"No se pudo exportar este horario :( :\n{e}")
+            QMessageBox.critical(self, "Error", f"No se pudo exportar este horario :( :\n{e}")"""
             
     def rellenar_tabla_desde_bd(self, filas_bd):
         tabla = self.ui.tablaHorario
@@ -1000,4 +1001,69 @@ class MainWindow(QtWidgets.QMainWindow):
             QMessageBox.information(self, "Guardar horario", "Horario guardado correctamente en la BD.")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo guardar el horario:\n{e}")
+            
+    def exportar_excel(self):
+        from openpyxl import Workbook
+        from openpyxl.styles import PatternFill, Font
+        from PyQt5.QtGui import QColor
+
+        # Seleccionar archivo destino
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Guardar horario como Excel",
+            "horario.xlsx",
+            "Excel (*.xlsx)"
+        )
+        if not path:
+            return
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Horario"
+
+        tabla = self.ui.tablaHorario
+        filas = tabla.rowCount()
+        columnas = tabla.columnCount()
+
+        # ---- ESCRIBIR CABECERAS ----
+        ws.cell(row=1, column=1, value="Hora")
+
+        for c in range(columnas):
+            header_item = tabla.horizontalHeaderItem(c)
+            if header_item:
+                ws.cell(row=1, column=c+2, value=header_item.text())
+
+        # ---- ESCRIBIR CONTENIDO ----
+        for r in range(filas):
+            hora = tabla.verticalHeaderItem(r).text()
+            ws.cell(row=r+2, column=1, value=hora)
+
+            for c in range(columnas):
+                item = tabla.item(r, c)
+                celda_excel = ws.cell(row=r+2, column=c+2)
+
+                if item:
+                    celda_excel.value = item.text()
+
+                    # Obtener color de fondo desde Qt
+                    brush = item.background()
+                    if brush.style() != Qt.NoBrush:
+                        qcolor = brush.color()
+                        hex_color = qcolor.name().replace("#", "").upper()
+
+                        # Aplicar color en Excel
+                        celda_excel.fill = PatternFill(
+                            start_color=hex_color,
+                            end_color=hex_color,
+                            fill_type="solid"
+                        )
+
+                    # Hacer texto más visible
+                    celda_excel.font = Font(color="000000")
+
+        try:
+            wb.save(path)
+            QMessageBox.information(self, "Éxito", "Horario exportado en Excel con colores correctamente.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo exportar:\n{e}")
 
