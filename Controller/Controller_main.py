@@ -1,10 +1,17 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMessageBox, QInputDialog, QTableWidgetItem
+
 from Controller.algoritmo_backtracking import generar_matriz_horario, Prof
 from PyQt5.QtGui import QColor
 
-from PyQt5.QtWidgets import QMessageBox, QInputDialog, QTableWidgetItem, QFileDialog
+from PyQt5.QtWidgets import (
+    QMessageBox,
+    QInputDialog,
+    QTableWidgetItem,
+    QFileDialog,
+    QColorDialog,
+)
+
 from PyQt5 import uic
 
 from Vista.Vista_ui import Ui_MainWindow
@@ -49,16 +56,22 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.btnAnadirModulo.clicked.connect(self.anadir_modulo)
         self.ui.btnEliminarModulo.clicked.connect(self.eliminar_modulo_seleccionado)
 
-        header = self.ui.tablaProfesores.horizontalHeader()
-        header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        tablas = [
+        self.ui.tablaProfesores,
+        self.ui.tablaModulos,
+        self.ui.tablaPreferencias,
+        self.ui.tablaHorario,
+        ]
+
+        for tabla in tablas:
+            header = tabla.horizontalHeader()
+            header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
 
         self.ui.btnCargarModulos.clicked.connect(self.cargar_modulos_en_tabla)
         self.ui.btnAsignarProfesorModulo.clicked.connect(self.asignar_profesor_a_modulo)
 
         self.ui.tablaModulos.itemChanged.connect(self.celda_modulo_editada)
-
-        header_mod = self.ui.tablaModulos.horizontalHeader()
-        header_mod.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         
         self.ui.btnGenerarHorario.clicked.connect(self.on_generar_horario)
         self.ui.btnGuardarHorario.clicked.connect(self.on_guardar_horario) 
@@ -133,6 +146,7 @@ class MainWindow(QtWidgets.QMainWindow):
             nombre = prof.get("nombre", "")
             horas_max_dia = prof.get("horas_max_dia", "")
             horas_max_semana = prof.get("horas_max_semana", "")
+            color_hex = prof.get("color", "")   # 👈 nuevo
 
             item_nombre = QTableWidgetItem(str(nombre))
             item_nombre.setData(Qt.UserRole, id_prof)
@@ -144,7 +158,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
             tabla.setItem(fila, 2, QTableWidgetItem(str(horas_max_semana)))
             tabla.setItem(fila, 3, QTableWidgetItem(str(horas_max_dia)))
-            tabla.setItem(fila, 4, QTableWidgetItem(""))
+            
+            item_color = QTableWidgetItem(color_hex)
+            if color_hex:
+                item_color.setBackground(QColor(color_hex))
+            tabla.setItem(fila, 4, item_color)
 
         self.bloqueo_item_changed_prof = False
         tabla.resizeColumnsToContents()
@@ -176,12 +194,20 @@ class MainWindow(QtWidgets.QMainWindow):
         if not ok:
             return
 
+        color = QColorDialog.getColor(parent=self, title="Elige un color para el profesor")
+        if not color.isValid():
+            color_hex = "#FFFFFF"  
+        else:
+            color_hex = color.name()  
+
         try:
-            insertar_profesor(nombre.strip(), horas_dia, horas_sem)
+            insertar_profesor(nombre.strip(), horas_dia, horas_sem, color_hex)
             QMessageBox.information(self, "OK", "Profesor insertado correctamente.")
             self.cargar_profesores_en_tabla()
+            self.cargar_colores_profesores()  # recargar mapa de colores para el horario
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al insertar profesor:\n{e}")
+
 
     def get_id_prof_de_fila(self, fila: int):
         item = self.ui.tablaProfesores.item(fila, 0)
@@ -653,7 +679,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.rellenar_tabla_desde_bd(filas_bd)
             return
         else:
-
             print(f"[HORARIO] No hay horario guardado para {ciclo}. Generando nuevo...")
             datos = generar_matriz_horario(ciclo_filtrado=ciclo)
             self.rellenar_tabla_horario(datos)

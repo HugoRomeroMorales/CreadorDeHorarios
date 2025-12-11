@@ -280,7 +280,7 @@ class Ui_MainWindow(object):
         item = self.tablaProfesores.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Restricciones"))
         item = self.tablaProfesores.horizontalHeaderItem(4)
-        item.setText(_translate("MainWindow", "Preferencias"))
+        item.setText(_translate("MainWindow", "Color"))
         self.btnAnadirProfesor.setText(_translate("MainWindow", "Añadir profesor"))
         self.btnEditarProfesor.setText(_translate("MainWindow", "Editar profesor"))
         self.btnEliminarProfesor.setText(_translate("MainWindow", "Eliminar"))
