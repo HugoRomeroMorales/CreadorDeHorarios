@@ -233,8 +233,8 @@ def generar_horario_recursivo(indice_tarea):
  
     for profesor in lista_profesores:
         nombre = profesor.get_nombre()
-        id_asignacion = profesor.get_id()          # módulo concreto
-        id_docente = profesor.get_id_docente()     # persona real
+        id_asignacion = profesor.get_id()        
+        id_docente = profesor.get_id_docente()     
         p_grupo = profesor.get_grupo()
  
         if p_grupo != nombre_grupo_tarea:
@@ -286,8 +286,8 @@ def generar_matriz_horario(ciclo_filtrado=None):
     lista_profesores = []
     tareas_globales = []
     info_fallo = {"profundidad_maxima": -1, "razones": {}}
-    nodos_visitados = 0   # <-- ahora sí resetea la global
- 
+    nodos_visitados = 0   
+    
     # 2. Cargar Datos
     try:
         lista_profesores = cargar_profesores_desde_bd()
@@ -393,5 +393,5 @@ def imprimir_tabla_multi_grupo():
 # Bloque de ejecución solo si se llama directamente al archivo (Testing)
 if __name__ == "__main__":
     datos = generar_matriz_horario()
-    horario = datos["horario"] # Asignar a global para que imprimir funcione
+    horario = datos["horario"] 
     imprimir_tabla_multi_grupo()

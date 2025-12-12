@@ -120,6 +120,10 @@ class MainWindow(QtWidgets.QMainWindow):
         """self.ui.btnExportarCSV.clicked.connect(self.exportar_csv)"""
         self.ui.btnExportarCSV.clicked.connect(self.exportar_excel)
 
+
+    # Carga profesores y módulos desde la BD y rellena la tabla de profesores.
+    # Mete en la tabla: nombre, módulos asignados, horas máximas, y color.
+
     def cargar_profesores_en_tabla(self):
         try:
             profesores = get_profesor()
@@ -168,6 +172,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.bloqueo_item_changed_prof = False
         tabla.resizeColumnsToContents()
 
+    # Pide los datos de un nuevo profesor y lo inserta en la BD.
+    # Luego llama a insertar_profesor en la BD y recarga la tabla y el mapa de colores.
     def anadir_profesor(self):
         nombre, ok = QInputDialog.getText(self, "Nuevo profesor", "Nombre del profesor:")
         if not ok or not nombre.strip():
@@ -205,17 +211,18 @@ class MainWindow(QtWidgets.QMainWindow):
             insertar_profesor(nombre.strip(), horas_dia, horas_sem, color_hex)
             QMessageBox.information(self, "OK", "Profesor insertado correctamente.")
             self.cargar_profesores_en_tabla()
-            self.cargar_colores_profesores()  # recargar mapa de colores para el horario
+            self.cargar_colores_profesores() 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al insertar profesor:\n{e}")
 
-
+    # Se ejecuta cuando el usuario edita una celda de la tabla de profesores.
     def get_id_prof_de_fila(self, fila: int):
         item = self.ui.tablaProfesores.item(fila, 0)
         if item is None:
             return None
         return item.data(Qt.UserRole)
 
+    # Se ejecuta cuando el usuario edita una celda de la tabla de profesores.
     def celda_profesor_editada(self, item):
         if self.bloqueo_item_changed_prof:
             return
@@ -252,6 +259,7 @@ class MainWindow(QtWidgets.QMainWindow):
             QMessageBox.critical(self, "Error", f"Error al actualizar profesor:\n{e}")
             self.cargar_profesores_en_tabla()
 
+    # Elimina el profesor seleccionado en la tabla.
     def eliminar_profesor_seleccionado(self):
         tabla = self.ui.tablaProfesores
         fila = tabla.currentRow()
@@ -278,6 +286,7 @@ class MainWindow(QtWidgets.QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al eliminar profesor:\n{e}")
 
+    # Carga TODOS los módulos desde la BD y los guarda en self.modulos_cache.
     def cargar_modulos_en_tabla(self):
         try:
             self.modulos_cache = get_modulo()
@@ -287,6 +296,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._cargar_modulos_en_tabla_desde_lista(self.modulos_cache)
 
+    # Rellena la tabla de módulos con una lista ya filtrada.
     def _cargar_modulos_en_tabla_desde_lista(self, modulos):
         self.bloqueo_item_changed_mod = True
 
@@ -312,6 +322,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.bloqueo_item_changed_mod = False
         tabla.resizeColumnsToContents()
 
+    #Cuando el usuario edita una celda de la tabla de módulos.
     def celda_modulo_editada(self, item):
         if self.bloqueo_item_changed_mod:
             return
@@ -359,12 +370,14 @@ class MainWindow(QtWidgets.QMainWindow):
             QMessageBox.critical(self, "Error", f"Error al actualizar módulo:\n{e}")
             self.cargar_modulos_en_tabla()
 
+    # Devuelve el id del módulo de una fila de la tabla de módulos.
     def get_id_mod_de_fila(self, fila: int):
         item = self.ui.tablaModulos.item(fila, 0)
         if item is None:
             return None
         return item.data(Qt.UserRole)
 
+    # Asigna un profesor a un módulo.
     def asignar_profesor_a_modulo(self):
         tabla = self.ui.tablaModulos
         fila = tabla.currentRow()
@@ -418,6 +431,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.cargar_profesores_en_tabla()
         self.cargar_ciclos()
 
+    # Rellena el combo de profesores para gestionar preferencias.
     def cargar_profesores_en_combo_pref(self):
         try:
             profesores = get_profesor()
@@ -439,12 +453,14 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.tablaPreferencias.clearContents()
             self.ui.tablaPreferencias.setRowCount(0)
 
+    # Devuelve el id del profesor seleccionado en el combo de preferencias.
     def get_id_prof_pref_actual(self):
         idx = self.ui.comboProfesoresPref.currentIndex()
         if idx < 0:
             return None
         return self.ui.comboProfesoresPref.itemData(idx)
 
+    # Carga de BD las preferencias del profesor seleccionado y las muestra en la tabla.
     def cargar_preferencias_profesor_seleccionado(self):
         id_prof = self.get_id_prof_pref_actual()
         tabla = self.ui.tablaPreferencias
@@ -490,6 +506,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         tabla.resizeColumnsToContents()
 
+    # Inserta una preferencia para el profesor seleccionado.
     def anadir_preferencia(self):
         id_prof = self.get_id_prof_pref_actual()
         if id_prof is None:
@@ -520,10 +537,12 @@ class MainWindow(QtWidgets.QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al insertar preferencia:\n{e}")
 
+    # Solo recarga la tabla y muestra "Preferencias actualizadas".
     def guardar_preferencias(self):
         self.cargar_preferencias_profesor_seleccionado()
         QMessageBox.information(self, "Preferencias", "Preferencias actualizadas.")
 
+    # Elimina la preferencia seleccionada en la tabla (doble clic).
     def eliminar_preferencia_seleccionada(self, fila, columna):
         tabla = self.ui.tablaPreferencias
         item = tabla.item(fila, 0)
@@ -547,9 +566,9 @@ class MainWindow(QtWidgets.QMainWindow):
             self.cargar_preferencias_profesor_seleccionado()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al eliminar preferencia:\n{e}")
-#Aqui esta el metodo de eliminar el modulo, el funcionamiento de este es que si le das al boton sin haber seleccionar un modulo antes pues no nos dejara y aparecera un mensaje por pantalla
-#Luego si lo seleccionamos borraremos la fila del modulo de la tabla y tendremos que confirmar si queremos borrarlo antes de que la acción se ejecute
-
+            
+    #Aqui esta el metodo de eliminar el modulo, el funcionamiento de este es que si le das al boton sin haber seleccionar un modulo antes pues no nos dejara y aparecera un mensaje por pantalla
+    #Luego si lo seleccionamos borraremos la fila del modulo de la tabla y tendremos que confirmar si queremos borrarlo antes de que la acción se ejecute
     def eliminar_modulo_seleccionado(self):
         tabla = self.ui.tablaModulos
         fila = tabla.currentRow()
@@ -582,7 +601,7 @@ class MainWindow(QtWidgets.QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo eliminar:\n{e}")
 
-#Aqui el metodo de añadir el modulo que en este al darle al boton de añadir ya nos dice que le digamos el nombre y el ciclo del modulo, junto al numero de horas y maximo de horas por dia, si todo esa informacion esta colocada correctamente y no rompe nada se nos deberia de generar el modulo 
+    #Aqui el metodo de añadir el modulo que en este al darle al boton de añadir ya nos dice que le digamos el nombre y el ciclo del modulo, junto al numero de horas y maximo de horas por dia, si todo esa informacion esta colocada correctamente y no rompe nada se nos deberia de generar el modulo 
     def anadir_modulo(self):
         nombre, ok = QInputDialog.getText(self, "Nuevo módulo", "Nombre del módulo:")
         if not ok or not nombre.strip():
@@ -621,7 +640,7 @@ class MainWindow(QtWidgets.QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo añadir el módulo:\n{e}")
 
-#Aqui el metodo de cargar ciclos  
+    #Aqui el metodo de cargar ciclos  
     def cargar_ciclos(self):
         modulos = self.modulos_cache or []
         ciclos = sorted({m.get("ciclo", "") for m in modulos if m.get("ciclo")})
@@ -630,11 +649,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if ciclos:
             self.cargar_nombres_por_ciclo()
             self.actualizar_tabla_modulos()
-#Aqui el metodo de cuando gemos cambiado un modulo y un ciclo 
+    #Aqui el metodo de cuando gemos cambiado un modulo y un ciclo 
     def on_ciclo_modulo_cambiado(self):
         self.cargar_nombres_por_ciclo()
         self.actualizar_tabla_modulos()
 
+    # Aqui el metodo de cargar nombres por ciclo
     def cargar_nombres_por_ciclo(self):
         ciclo_sel = self.ui.comboCicloModulos.currentText()
         modulos = self.modulos_cache or []
@@ -642,6 +662,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.comboGrupoModulos.clear()
         self.ui.comboGrupoModulos.addItems(nombres)
 
+    # Aqui el metodo de actualizar la tabla de modulos
     def actualizar_tabla_modulos(self):
         ciclo_sel = self.ui.comboCicloModulos.currentText().strip()
         nombre_sel = self.ui.comboGrupoModulos.currentText().strip()
@@ -656,7 +677,8 @@ class MainWindow(QtWidgets.QMainWindow):
             filtrados.append(m)
 
         self._cargar_modulos_en_tabla_desde_lista(filtrados)
-        
+    
+    # Genera un horario nuevo o carga uno existente desde la BD.
     def on_generar_horario(self):
         print(">>> Botón 'Generar horario' pulsado")
 
@@ -684,6 +706,7 @@ class MainWindow(QtWidgets.QMainWindow):
             datos = generar_matriz_horario(ciclo_filtrado=ciclo)
             self.rellenar_tabla_horario(datos)
 
+    # Guarda el horario actual en la BD.
     def cargar_ciclos_en_combobox(self):
         combo_ciclo = self.ui.comboCicloHorario
         combo_ciclo.clear()
@@ -700,24 +723,24 @@ class MainWindow(QtWidgets.QMainWindow):
         for c in ciclos:
             combo_ciclo.addItem(c)
 
+    # Devuelve True si una asignación (tarea) cae en una preferencia "Evitar si es posible" (nivel 3).
     def es_slot_preferencia_conflictiva(self, profe_o_id, tarea):
         if hasattr(profe_o_id, "get_id_docente"):
             id_prof = profe_o_id.get_id_docente()
         else:
-            # si es un número o diccionario
+   
             try:
                 id_prof = int(profe_o_id)
             except Exception:
-                return False  # si no se puede interpretar, no marcamos rojo
+                return False 
 
         if id_prof is None or id_prof < 0:
             return False
 
         dia_tarea = tarea["nombre_dia"]
 
-        # Asegurar coincidencia exacta con la BD
-        if dia_tarea == "Miercoles":       # tu algoritmo genera "Miercoles"
-            dia_bd = "Miércoles"           # en BD guardas "Miércoles"
+        if dia_tarea == "Miercoles":     
+            dia_bd = "Miércoles"           
         else:
             dia_bd = dia_tarea
 
@@ -738,7 +761,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 if nivel == 3:
                     return True  
         return False
-
+    
+    # Rellena la tabla de horario con los datos obtenidos de generar_matriz_horario.
     def rellenar_tabla_horario(self, datos):
         tabla = self.ui.tablaHorario
 
@@ -838,7 +862,7 @@ class MainWindow(QtWidgets.QMainWindow):
             tabla.setItem(fila, col, item)
 
             
-            
+    # Carga los colores de los profesores en un diccionario para uso posterior.  
     def cargar_colores_profesores(self):
         self.colores_prof = {}
         try:
@@ -853,45 +877,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if pid is not None and color:
                 self.colores_prof[pid] = color
                 
-#Aqui tenemos el metodo de exportar csv, la funcionalidad del boton  es que cuando el usuario le da el boton para guardar la tabla en formato CSV, se recorre la tabla entera transformandola en filas y celdas para adaptarlo al csv y se muestra un mensaje de exito o de error al terminar, así completamos unas de las partes y nuestros usuarios saben que han hecho bien la exportación o no. 
-    """def exportar_csv(self):
-        import csv
-
-        path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Guardar horario como CSV",
-            "horario.csv",
-            "CSV (*.csv)"
-        )
-        if not path:
-            return
-
-        tabla = self.ui.tablaHorario
-        filas = tabla.rowCount()
-        columnas = tabla.columnCount()
-
-        try:
-            with open(path, "w", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-
-                headers = [tabla.horizontalHeaderItem(c).text() for c in range(columnas)]
-                writer.writerow([""] + headers)
-
-                for r in range(filas):
-                    nombre_hora = tabla.verticalHeaderItem(r).text()
-                    row = [nombre_hora]
-
-                    for c in range(columnas):
-                        item = tabla.item(r, c)
-                        row.append(item.text() if item else "")
-
-                    writer.writerow(row)
-
-            QMessageBox.information(self, "Éxito", " El horario ha sido  exportado correctamente ;).")
-
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"No se pudo exportar este horario :( :\n{e}")"""
-            
+    # Rellena la tabla de horario con los datos obtenidos de la BD.
     def rellenar_tabla_desde_bd(self, filas_bd):
         tabla = self.ui.tablaHorario
 
@@ -936,7 +922,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 "id_modulo": id_modulo,
             })
 
-            # color del profesor
+       
             try:
                 color_hex = self.colores_prof.get(id_prof)
                 if color_hex:
@@ -944,7 +930,7 @@ class MainWindow(QtWidgets.QMainWindow):
             except Exception as e:
                 print(f"[COLORES BD] Error aplicando color: {e}")
 
-            # rojito si viola preferencia nivel 3
+          
             tarea_fake = {
                 "nombre_dia": dia,
                 "indice_hora_diaria": int(hora_inicio) - 1
@@ -957,6 +943,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             tabla.setItem(fila, col, item)
 
+    # Guarda el horario actual en la BD.
     def on_guardar_horario(self):
         ciclo = self.ui.comboCicloHorario.currentText().strip()
         if not ciclo:
@@ -1002,6 +989,7 @@ class MainWindow(QtWidgets.QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo guardar el horario:\n{e}")
             
+    # Exporta el horario actual a un archivo Excel, manteniendo los colores de las celdas.
     def exportar_excel(self):
         from openpyxl import Workbook
         from openpyxl.styles import PatternFill, Font
